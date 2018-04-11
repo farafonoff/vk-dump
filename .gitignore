@@ -1,0 +1,4 @@
+.rake_tasks~
+config.yaml
+internal/*
+conversation_ids
