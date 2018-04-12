@@ -86,9 +86,20 @@ task :msg_to_txt => :make_vk_obj do
   messages_txt = messages_yaml.reverse_each.map do |msg|
     time = Time.at(msg['date']) #.strftime(TIME_FORMAT)
     sender = msg['from_id']
-    body = msg['body']
+    
+    header = "[#{time} #{sender}]:\n"
 
-    "[#{time} #{sender}]:\n#{body}\n"
+    if msg['body'].empty?
+      body = "<empty message>\n"
+    else
+      body = "#{msg['body']}\n"
+    end
+    
+    footer = ''
+    footer += "Has attachments\n" if msg['attachments']
+    footer += "Has forwarded messages\n" if msg['fwd_messages']
+
+    header + body + footer
   end.join("\n")
 
   File.write("output/messages_#{target_id}.txt", messages_txt)
