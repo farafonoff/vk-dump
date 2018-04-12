@@ -1,4 +1,5 @@
 .rake_tasks~
 config.yaml
 internal/*
-conversation_ids
+conversation_counts
+conversations_user_ids
