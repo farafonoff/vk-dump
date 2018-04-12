@@ -118,7 +118,7 @@ task :get_conversations_yaml  => :make_vk_obj do
 end
 
 desc "get conversations in yaml"
-task :get_conversations_yaml  => :make_vk_obj do
+task :get_conversations_yaml do
   input = File.read('conversations_user_ids')
   user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
 
@@ -130,7 +130,7 @@ task :get_conversations_yaml  => :make_vk_obj do
 end
 
 desc "get conversations in txt"
-task :get_conversations_txt  => :make_vk_obj do
+task :get_conversations_txt do
   input = File.read('conversations_user_ids')
   user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
 
@@ -139,4 +139,10 @@ task :get_conversations_txt  => :make_vk_obj do
     Rake::Task['msg_to_txt'].reenable
     Rake::Task['msg_to_txt'].invoke
   end
+end
+
+desc "clean output"
+task :clean_output  => :make_vk_obj do
+  targets = Dir.glob("output/*")
+  FileUtils.rm(targets)
 end
