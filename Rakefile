@@ -42,8 +42,8 @@ task :playground => :make_vk_obj do
   binding.pry
 end
 
-desc "get conversations"
-task :get_conversations  => :make_vk_obj do
+desc "get conversation_user_list"
+task :get_conversation_user_list  => :make_vk_obj do
   dialog_count = @vk.messages.getDialogs(count: 0)['count']
   dialog_parts = (dialog_count.to_f / PART_COUNT).ceil
 
@@ -105,18 +105,38 @@ task :msg_to_txt => :make_vk_obj do
   File.write("output/messages_#{target_id}.txt", messages_txt)
 end
 
-# desc "parse conversations"
-# task :parse_conversations  => :make_vk_obj do
-#   input = File.read('conversations_user_ids')
-#   user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+desc "get conversations in yaml"
+task :get_conversations_yaml  => :make_vk_obj do
+  input = File.read('conversations_user_ids')
+  user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
 
-#   File.open('conversation_counts','w') do |output|
-#     user_ids.each do |user_id|
-#       messages_count = @vk.messages.getHistory(user_id: user_id, count: 0)['count']
-  
-#       output.puts "#{user_id}: #{messages_count}"
-      
-#       sleep SLEEP_TIME
-#     end
-#   end
-# end
+  user_ids.each do |target_id|
+    ENV['target_id'] = target_id.to_s
+    Rake::Task['get_messages'].reenable
+    Rake::Task['get_messages'].invoke
+  end
+end
+
+desc "get conversations in yaml"
+task :get_conversations_yaml  => :make_vk_obj do
+  input = File.read('conversations_user_ids')
+  user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+
+  user_ids.each do |target_id|
+    ENV['target_id'] = target_id.to_s
+    Rake::Task['get_messages'].reenable
+    Rake::Task['get_messages'].invoke
+  end
+end
+
+desc "get conversations in txt"
+task :get_conversations_txt  => :make_vk_obj do
+  input = File.read('conversations_user_ids')
+  user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+
+  user_ids.each do |target_id|
+    ENV['target_id'] = target_id.to_s
+    Rake::Task['msg_to_txt'].reenable
+    Rake::Task['msg_to_txt'].invoke
+  end
+end
