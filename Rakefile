@@ -95,6 +95,14 @@ def get_photo_url(attachment)
   "#{photo_url}"
 end
 
+def get_wall_post(post, level)
+  prefix = get_prefix(level)
+
+  text = prefix_multiline(post['text'], get_prefix(level + 1))
+
+  "#{prefix}Вложение (пост на стене или ответ на пост):\n#{text}"
+end
+
 def process_attachments(msg, level)
   prefix = get_prefix(level)
 
@@ -104,6 +112,7 @@ def process_attachments(msg, level)
     case attachment['type']
     when  'photo'
       url = get_photo_url(attachment)
+
       "#{prefix}Вложение (фото): #{url}"
     when 'link'
       url = attachment['link']['url']
@@ -117,11 +126,12 @@ def process_attachments(msg, level)
       "#{prefix}Вложение (аудио): #{artist} - #{title}"
     when 'video'
       title = attachment['video']['title']
+
       "#{prefix}Вложение (видео): #{title}"
     when 'wall'
-      # TO BE DONE
-      text = attachment['wall']['text']
-      "#{prefix}Вложение (пост на стене):"
+      get_wall_post(attachment['wall'], level)
+    when 'wall_reply'
+      get_wall_post(attachment['wall_reply'], level)
     when 'doc'
       url = attachment['doc']['url'] 
       title = attachment['doc']['title']
