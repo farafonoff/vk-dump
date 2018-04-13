@@ -79,32 +79,95 @@ task :get_messages => :make_vk_obj do
   end
 end
 
+def get_prefix(level)
+  PREFIX_STRING * level
+end
+
 def prefix_multiline(text, prefix)
   text.each_line.map {|line| prefix + line}.join
 end
 
-def get_msg_txt(msg, level = 0)
-  time = Time.at(msg['date'])
-  sender = msg['from_id'] || msg['user_id']
+def get_photo_url(attachment)
+  resolution_strings = attachment['photo'].keys.find_all {|str| str.include? 'photo_'}
+  max_res = resolution_strings.map {|str| str.scan(/photo_([0-9]+)/).first.first.to_i }.max
+  photo_url = attachment['photo']["photo_#{max_res}"]
 
-  prefix = PREFIX_STRING * level
+  "#{photo_url}"
+end
 
-  header = "#{prefix}[#{time} #{sender}]:\n"
+def process_attachments(msg, level)
+  prefix = get_prefix(level)
 
+  return '' unless msg['attachments']
+
+  result = msg.attachments.map do |attachment|
+    case attachment['type']
+    when  'photo'
+      url = get_photo_url(attachment)
+      "#{prefix}Вложение (фото): #{url}"
+    when 'link'
+      url = attachment['link']['url']
+      title = attachment['link']['title']
+
+      "#{prefix}Вложение (ссылка): #{title} (#{url})"
+    when 'audio'
+      artist = attachment['audio']['artist']
+      title = attachment['audio']['title']
+
+      "#{prefix}Вложение (аудио): #{artist} - #{title}"
+    when 'video'
+      title = attachment['video']['title']
+      "#{prefix}Вложение (видео): #{title}"
+    when 'wall'
+      # TO BE DONE
+      text = attachment['wall']['text']
+      "#{prefix}Вложение (пост на стене):"
+    when 'doc'
+      url = attachment['doc']['url'] 
+      title = attachment['doc']['title']
+
+      "#{prefix}Вложение (документ): #{title} (#{url})"
+    else
+      "#{prefix}Вложение (другое)."
+    end
+  end.join("\n")
+
+  "#{result}\n"
+end
+
+def process_forwarded(msg, level)
+  prefix = get_prefix(level)
+
+  if msg['fwd_messages']
+    forwarded_messages = msg['fwd_messages'].map { |msg| get_msg_txt(msg, level) }.join("\n")
+    return "#{prefix}Forwarded messages:\n#{forwarded_messages}" 
+  end
+
+  return ''
+end
+
+def process_body(msg, prefix)
   if msg['body'].empty?
     body = "#{prefix}<empty message>\n"
   else
     body = "#{prefix_multiline(msg['body'], prefix)}\n"
   end
-    
-  attachments = ''
-  attachments += "#{prefix}Has attachments\n" if msg['attachments']
-  
-  forwarded = ''
-  if msg['fwd_messages']
-    forwarded_messages = msg['fwd_messages'].map { |msg| get_msg_txt(msg, level + 1) }.join("\n")
-    forwarded = "#{prefix}Forwarded messages:\n#{forwarded_messages}" 
-  end
+end
+
+def get_header(msg, prefix)
+  time = Time.at(msg['date'])
+  sender = msg['from_id'] || msg['user_id']
+
+  "#{prefix}[#{time} #{sender}]:\n"
+end
+
+def get_msg_txt(msg, level = 0)
+  prefix = get_prefix(level)
+
+  header = get_header(msg, prefix)
+  body = process_body(msg, prefix)
+  attachments = process_attachments(msg, level)
+  forwarded = process_forwarded(msg, level + 1)
 
   header + body + attachments + forwarded
 end
