@@ -4,6 +4,7 @@ require 'pry'
 
 PART_COUNT = 100
 SLEEP_TIME = 2
+PREFIX_STRING = "\t"
 
 config = YAML::load(File.read("config.yaml"))
 
@@ -78,29 +79,41 @@ task :get_messages => :make_vk_obj do
   end
 end
 
+def prefix_multiline(text, prefix)
+  text.each_line.map {|line| prefix + line}.join
+end
+
+def get_msg_txt(msg, level = 0)
+  time = Time.at(msg['date'])
+  sender = msg['from_id'] || msg['user_id']
+
+  prefix = PREFIX_STRING * level
+
+  header = "#{prefix}[#{time} #{sender}]:\n"
+
+  if msg['body'].empty?
+    body = "#{prefix}<empty message>\n"
+  else
+    body = "#{prefix_multiline(msg['body'], prefix)}\n"
+  end
+    
+  attachments = ''
+  attachments += "#{prefix}Has attachments\n" if msg['attachments']
+  
+  forwarded = ''
+  if msg['fwd_messages']
+    forwarded_messages = msg['fwd_messages'].map { |msg| get_msg_txt(msg, level + 1) }.join("\n")
+    forwarded = "#{prefix}Forwarded messages:\n#{forwarded_messages}" 
+  end
+
+  header + body + attachments + forwarded
+end
+
 desc "message to text"
 task :msg_to_txt => :make_vk_obj do
   target_id = ENV['target_id'].to_i
   messages_yaml = YAML::load(File.read("internal/messages_#{target_id}.yaml"))
-
-  messages_txt = messages_yaml.reverse_each.map do |msg|
-    time = Time.at(msg['date']) #.strftime(TIME_FORMAT)
-    sender = msg['from_id']
-    
-    header = "[#{time} #{sender}]:\n"
-
-    if msg['body'].empty?
-      body = "<empty message>\n"
-    else
-      body = "#{msg['body']}\n"
-    end
-    
-    footer = ''
-    footer += "Has attachments\n" if msg['attachments']
-    footer += "Has forwarded messages\n" if msg['fwd_messages']
-
-    header + body + footer
-  end.join("\n")
+  messages_txt = messages_yaml.reverse_each.map { |msg| get_msg_txt(msg) }.join("\n")
 
   File.write("output/messages_#{target_id}.txt", messages_txt)
 end
