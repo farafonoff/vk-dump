@@ -2,11 +2,9 @@ require 'vkontakte_api'
 require 'yaml'
 require 'pry'
 
-PART_COUNT = 100
-SLEEP_TIME = 2
-PREFIX_STRING = "\t"
+@config = YAML::load(File.read("config.yaml"))
 
-config = YAML::load(File.read("config.yaml"))
+require './methods.rb'
 
 VkontakteApi.configure do |config|
   config.api_version = '5.74'
@@ -18,7 +16,7 @@ end
 desc "get auth url"
 task :get_auth_url do
   scope_definition = [:friends, :photos, :audio, :video, :pages, :status, :notes, :messages, :wall]
-  url = VkontakteApi.authorization_url(type: :client, client_id: config['client_id'], scope: scope_definition)
+  url = VkontakteApi.authorization_url(type: :client, client_id: @config['client_id'], scope: scope_definition)
   puts url
 end
 
@@ -46,17 +44,17 @@ end
 desc "get conversation_user_list"
 task :get_conversation_user_list  => :make_vk_obj do
   dialog_count = @vk.messages.getDialogs(count: 0)['count']
-  dialog_parts = (dialog_count.to_f / PART_COUNT).ceil
+  dialog_parts = (dialog_count.to_f / @config['part_count']).ceil
 
   File.open('conversations_user_ids','w') do |output|
     dialog_parts.times do |i|
-      get_dialogs_params = { preview_length: 1, count: PART_COUNT, offset: i * PART_COUNT }
+      get_dialogs_params = { preview_length: 1, count: @config['part_count'], offset: i * @config['part_count'] }
       current_ids_part = @vk.messages.getDialogs(get_dialogs_params)['items'].map {|elt| elt['message']['user_id'] }
       users_part = @vk.users.get(user_ids: current_ids_part)
   
       users_part.each { |user| output.puts "#{user[:id]} \# #{user[:first_name]} #{user[:last_name]}" }
 
-      sleep SLEEP_TIME
+      sleep @config['sleep_time']
     end
   end
 end
@@ -66,11 +64,11 @@ task :get_messages => :make_vk_obj do
   target_id = ENV['target_id'].to_i
 
   messages_count = @vk.messages.getHistory(user_id: target_id, count: 0)['count']
-  messages_parts = (messages_count.to_f / PART_COUNT).ceil
+  messages_parts = (messages_count.to_f / @config['part_count']).ceil
   
   messages = (0...messages_parts).reduce([]) do |result,i|
-    messages_part = @vk.messages.getHistory(user_id: target_id, count: PART_COUNT, offset: i * PART_COUNT)['items']
-    sleep SLEEP_TIME
+    messages_part = @vk.messages.getHistory(user_id: target_id, count: @config['part_count'], offset: i * @config['part_count'])['items']
+    sleep @config['sleep_time']
     result += messages_part
   end
 
@@ -79,121 +77,6 @@ task :get_messages => :make_vk_obj do
   end
 end
 
-def get_prefix(level)
-  PREFIX_STRING * level
-end
-
-def prefix_multiline(text, prefix)
-  text.each_line.map {|line| prefix + line}.join
-end
-
-def get_photo_url(attachment)
-  resolution_strings = attachment['photo'].keys.find_all {|str| str.include? 'photo_'}
-  max_res = resolution_strings.map {|str| str.scan(/photo_([0-9]+)/).first.first.to_i }.max
-  photo_url = attachment['photo']["photo_#{max_res}"]
-
-  "#{photo_url}"
-end
-
-def get_wall_post(post, level)
-  # TODO: сделать обработку вложений у постов
-
-  prefix = get_prefix(level)
-  next_prefix = get_prefix(level + 1)
-
-  text = prefix_multiline(post['text'], next_prefix)
-  date = Time.at(post['date'])
-  author = post['from_id']
-
-  if (post['post_type'] == 'post')
-    pre_header = "#{prefix}Вложение (пост):\n"
-  else
-    pre_header = "#{prefix}Вложение (ответ на пост):\n"
-  end
-
-  header = "#{next_prefix}[#{date} #{author}]:\n"
-  
-  pre_header + header + text
-end
-
-def process_attachments(msg, level)
-  prefix = get_prefix(level)
-
-  return '' unless msg['attachments']
-
-  result = msg.attachments.map do |attachment|
-    case attachment['type']
-    when  'photo'
-      url = get_photo_url(attachment)
-
-      "#{prefix}Вложение (фото): #{url}"
-    when 'link'
-      url = attachment['link']['url']
-      title = attachment['link']['title']
-
-      "#{prefix}Вложение (ссылка): #{title} (#{url})"
-    when 'audio'
-      artist = attachment['audio']['artist']
-      title = attachment['audio']['title']
-
-      "#{prefix}Вложение (аудио): #{artist} - #{title}"
-    when 'video'
-      title = attachment['video']['title']
-
-      "#{prefix}Вложение (видео): #{title}"
-    when 'wall'
-      get_wall_post(attachment['wall'], level)
-    when 'wall_reply'
-      get_wall_post(attachment['wall_reply'], level)
-    when 'doc'
-      url = attachment['doc']['url'] 
-      title = attachment['doc']['title']
-
-      "#{prefix}Вложение (документ): #{title} (#{url})"
-    else
-      "#{prefix}Вложение (другое). FIXME: необработанный тип вложений!"
-    end
-  end.join("\n")
-
-  "#{result}\n"
-end
-
-def process_forwarded(msg, level)
-  prefix = get_prefix(level)
-
-  if msg['fwd_messages']
-    forwarded_messages = msg['fwd_messages'].map { |msg| get_msg_txt(msg, level) }.join("\n")
-    return "#{prefix}Forwarded messages:\n#{forwarded_messages}" 
-  end
-
-  return ''
-end
-
-def process_body(msg, prefix)
-  if msg['body'].empty?
-    body = "#{prefix}<empty message>\n"
-  else
-    body = "#{prefix_multiline(msg['body'], prefix)}\n"
-  end
-end
-
-def get_header(msg, prefix)
-  time = Time.at(msg['date'])
-  sender = msg['from_id'] || msg['user_id']
-
-  "#{prefix}[#{time} #{sender}]:\n"
-end
-
-def get_msg_txt(msg, level = 0)
-  prefix = get_prefix(level)
-
-  header = get_header(msg, prefix)
-  body = process_body(msg, prefix)
-  attachments = process_attachments(msg, level)
-  forwarded = process_forwarded(msg, level + 1)
-
-  header + body + attachments + forwarded
-end
 
 desc "message to text"
 task :msg_to_txt do

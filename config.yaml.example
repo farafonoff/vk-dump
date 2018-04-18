@@ -1,0 +1,4 @@
+client_id: <CLIENT_ID_HERE>
+part_count: 100
+sleep_time: 2
+prefix_string: "\t"
