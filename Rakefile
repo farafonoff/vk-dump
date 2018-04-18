@@ -34,27 +34,6 @@ task :make_vk_obj do
   @vk = VkontakteApi::Client.new(token)
 end
 
-# conversations list
-
-desc "list: get conversation user list"
-task :get_conversation_user_list  => :make_vk_obj do
-  dialog_count = @vk.messages.getDialogs(count: 0)['count']
-  part_count = @config['part_count']
-  dialog_parts = (dialog_count.to_f / part_count).ceil
-
-  File.open('conversations_user_ids','w') do |output|
-    dialog_parts.times do |i|
-      get_dialogs_params = { preview_length: 1, count: @config['part_count'], offset: i * @config['part_count'] }
-      current_ids_part = @vk.messages.getDialogs(get_dialogs_params)['items'].map {|elt| elt['message']['user_id'] }
-      users_part = @vk.users.get(user_ids: current_ids_part)
-  
-      users_part.each { |user| output.puts "#{user[:id]} \# #{user[:first_name]} #{user[:last_name]}" }
-
-      sleep @config['sleep_time']
-    end
-  end
-end
-
 # messages: single message
 
 desc "single target: get messages in yaml"
@@ -79,6 +58,13 @@ task :get_messages_txt do
 end
 
 # messages: multiple messages
+
+desc "multiple targets: get conversation list"
+task :get_conversation_list  => :make_vk_obj do
+  conversations = get_conversation_list
+  output_name = 'conversations_user_ids'
+  File.write(output_name, conversations.join("\n"))
+end
 
 desc "multiple targets: get conversations in yaml"
 task :get_conversations_yaml do

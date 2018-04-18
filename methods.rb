@@ -137,3 +137,19 @@ end
 def get_token(url)
   url.scan(/access_token=([^&]+)/).first.first
 end
+
+def get_conversation_list
+  dialog_count = @vk.messages.getDialogs(count: 0)['count']
+  part_count = @config['part_count']
+  dialog_parts = (dialog_count.to_f / part_count).ceil
+  
+  strs = (0...dialog_parts).map do |i|
+    dialog_params = { preview_length: 1, count: @config['part_count'], offset: i * @config['part_count'] }
+    current_ids_part = @vk.messages.getDialogs(dialog_params)['items'].map {|elt| elt['message']['user_id'] }
+    users_part = @vk.users.get(user_ids: current_ids_part)
+
+    sleep @config['sleep_time']
+
+    users_part.map { |user| "#{user[:id]} \# #{user[:first_name]} #{user[:last_name]}" }
+  end.flatten
+end
