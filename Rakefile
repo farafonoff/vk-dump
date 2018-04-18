@@ -96,11 +96,24 @@ def get_photo_url(attachment)
 end
 
 def get_wall_post(post, level)
+  # TODO: сделать обработку вложений у постов
+
   prefix = get_prefix(level)
+  next_prefix = get_prefix(level + 1)
 
-  text = prefix_multiline(post['text'], get_prefix(level + 1))
+  text = prefix_multiline(post['text'], next_prefix)
+  date = Time.at(post['date'])
+  author = post['from_id']
 
-  "#{prefix}Вложение (пост на стене или ответ на пост):\n#{text}"
+  if (post['post_type'] == 'post')
+    pre_header = "#{prefix}Вложение (пост):\n"
+  else
+    pre_header = "#{prefix}Вложение (ответ на пост):\n"
+  end
+
+  header = "#{next_prefix}[#{date} #{author}]:\n"
+  
+  pre_header + header + text
 end
 
 def process_attachments(msg, level)
@@ -138,7 +151,7 @@ def process_attachments(msg, level)
 
       "#{prefix}Вложение (документ): #{title} (#{url})"
     else
-      "#{prefix}Вложение (другое)."
+      "#{prefix}Вложение (другое). FIXME: необработанный тип вложений!"
     end
   end.join("\n")
 
@@ -183,7 +196,7 @@ def get_msg_txt(msg, level = 0)
 end
 
 desc "message to text"
-task :msg_to_txt => :make_vk_obj do
+task :msg_to_txt do
   target_id = ENV['target_id'].to_i
   messages_yaml = YAML::load(File.read("internal/messages_#{target_id}.yaml"))
   messages_txt = messages_yaml.reverse_each.map { |msg| get_msg_txt(msg) }.join("\n")
