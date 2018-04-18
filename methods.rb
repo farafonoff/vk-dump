@@ -113,3 +113,27 @@ def get_msg_txt(msg, level = 0)
 
   header + body + attachments + forwarded
 end
+
+def get_messages(target_id)
+  messages_count = @vk.messages.getHistory(user_id: target_id, count: 0)['count']
+  part_count = @config['part_count']
+  messages_parts = (messages_count.to_f / part_count.ceil)
+  
+  messages = (0...messages_parts).reduce([]) do |result,i|
+    messages_part = @vk.messages.getHistory(user_id: target_id, count: @config['part_count'], offset: i * @config['part_count'])['items']
+    sleep @config['sleep_time']
+    result += messages_part
+  end
+end
+
+def msg_yaml_to_txt(messages_yaml)
+  messages_yaml.reverse_each.map { |msg| get_msg_txt(msg) }.join("\n")
+end
+
+def get_user_ids(input)
+  input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+end
+
+def get_token(url)
+  url.scan(/access_token=([^&]+)/).first.first
+end

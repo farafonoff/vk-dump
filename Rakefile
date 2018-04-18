@@ -13,22 +13,20 @@ VkontakteApi.configure do |config|
   config.log_responses = false
 end
 
-desc "get auth url"
+# auth
+
+desc "auth: get auth url"
 task :get_auth_url do
   scope_definition = [:friends, :photos, :audio, :video, :pages, :status, :notes, :messages, :wall]
   url = VkontakteApi.authorization_url(type: :client, client_id: @config['client_id'], scope: scope_definition)
   puts url
 end
 
-desc "get token"
+desc "auth: get token"
 task :get_token do
-  token = ENV['vk_response_url'].scan(/access_token=([^&]+)/).first.first
+  url = ENV['vk_response_url']
+  token = get_token(url)
   File.write('internal/token', token)
-end
-
-desc "clear token"
-task :clear_token do
-  File.rm('internal/token')
 end
 
 task :make_vk_obj do
@@ -36,15 +34,13 @@ task :make_vk_obj do
   @vk = VkontakteApi::Client.new(token)
 end
 
-desc "playground"
-task :playground => :make_vk_obj do
-  binding.pry
-end
+# conversations list
 
-desc "get conversation_user_list"
+desc "list: get conversation user list"
 task :get_conversation_user_list  => :make_vk_obj do
   dialog_count = @vk.messages.getDialogs(count: 0)['count']
-  dialog_parts = (dialog_count.to_f / @config['part_count']).ceil
+  part_count = @config['part_count']
+  dialog_parts = (dialog_count.to_f / part_count).ceil
 
   File.open('conversations_user_ids','w') do |output|
     dialog_parts.times do |i|
@@ -59,72 +55,77 @@ task :get_conversation_user_list  => :make_vk_obj do
   end
 end
 
-desc "get messages"
-task :get_messages => :make_vk_obj do
-  target_id = ENV['target_id'].to_i
+# messages: single message
 
-  messages_count = @vk.messages.getHistory(user_id: target_id, count: 0)['count']
-  messages_parts = (messages_count.to_f / @config['part_count']).ceil
+desc "single target: get messages in yaml"
+task :get_messages_yaml => :make_vk_obj do
+  target_id = ENV['target_id'].to_i
+  messages = get_messages(target_id).to_yaml
   
-  messages = (0...messages_parts).reduce([]) do |result,i|
-    messages_part = @vk.messages.getHistory(user_id: target_id, count: @config['part_count'], offset: i * @config['part_count'])['items']
-    sleep @config['sleep_time']
-    result += messages_part
-  end
-
-  File.open("internal/messages_#{target_id}.yaml","w") do |f|
-    f.write(messages.to_yaml)
-  end
+  output_name = "internal/messages_#{target_id}.yaml"
+  File.write(output_name, messages)
 end
 
-
-desc "message to text"
-task :msg_to_txt do
+desc "single target: get messages in text"
+task :get_messages_txt do
   target_id = ENV['target_id'].to_i
-  messages_yaml = YAML::load(File.read("internal/messages_#{target_id}.yaml"))
-  messages_txt = messages_yaml.reverse_each.map { |msg| get_msg_txt(msg) }.join("\n")
-
-  File.write("output/messages_#{target_id}.txt", messages_txt)
+  
+  input_name = "internal/messages_#{target_id}.yaml"
+  messages_yaml = YAML::load(File.read(input_name))
+  
+  messages_txt = msg_yaml_to_txt(messages_yaml)
+  output_name = "output/messages_#{target_id}.txt"
+  File.write(output_name, messages_txt)
 end
 
-desc "get conversations in yaml"
-task :get_conversations_yaml  => :make_vk_obj do
-  input = File.read('conversations_user_ids')
-  user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+# messages: multiple messages
 
-  user_ids.each do |target_id|
-    ENV['target_id'] = target_id.to_s
-    Rake::Task['get_messages'].reenable
-    Rake::Task['get_messages'].invoke
-  end
-end
-
-desc "get conversations in yaml"
+desc "multiple targets: get conversations in yaml"
 task :get_conversations_yaml do
   input = File.read('conversations_user_ids')
-  user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+  user_ids = get_user_ids(input)
 
   user_ids.each do |target_id|
     ENV['target_id'] = target_id.to_s
-    Rake::Task['get_messages'].reenable
-    Rake::Task['get_messages'].invoke
+    Rake::Task['get_messages_yaml'].reenable
+    Rake::Task['get_messages_yaml'].invoke
   end
 end
 
-desc "get conversations in txt"
+desc "multiple targets: get conversations in txt"
 task :get_conversations_txt do
   input = File.read('conversations_user_ids')
-  user_ids = input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+  user_ids = get_user_ids(input)
 
   user_ids.each do |target_id|
     ENV['target_id'] = target_id.to_s
-    Rake::Task['msg_to_txt'].reenable
-    Rake::Task['msg_to_txt'].invoke
+    Rake::Task['get_messages_txt'].reenable
+    Rake::Task['get_messages_txt'].invoke
   end
 end
 
-desc "clean output"
-task :clean_output  => :make_vk_obj do
+# clean-up
+
+desc "clean up: clear output"
+task :clear_output do
   targets = Dir.glob("output/*")
   FileUtils.rm(targets)
+end
+
+desc "clean up: clear internal"
+task :clear_internal do
+  targets = Dir.glob("internal/*yaml")
+  FileUtils.rm(targets)
+end
+
+desc "clean up: clear token"
+task :clear_token do
+  File.rm('internal/token')
+end
+
+# playground
+
+desc "playground"
+task :playground => :make_vk_obj do
+  binding.pry
 end
