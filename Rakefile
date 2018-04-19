@@ -53,58 +53,51 @@ task :playground => :make_vk_obj do
   binding.pry
 end
 
-file 'conversation_list' do |f|
-  Rake::Task[:make_vk_obj].invoke  
+namespace 'single' do
+  rule /^internal\/messages([0-9]+)\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
 
-  conversations = get_conversation_list
-  File.write(f.name, conversations.join("\n"))
+    target_id = get_index(f.name)
+    messages = get_messages(target_id).to_yaml
+    File.write(f.name, messages)
+  end
+
+  rule /^output\/messages([0-9]+)\.txt$/ => [ 
+    proc {|name| "internal/messages#{get_index(name)}.yaml" }
+  ] do |f|
+    target_id = get_index(f.name)
+    
+    input_name = "internal/messages#{target_id}.yaml"
+    messages_yaml = YAML::load(File.read(input_name))
+    
+    messages_txt = msg_yaml_to_txt(messages_yaml)
+    File.write(f.name, messages_txt)
+  end
 end
 
-rule /^internal\/messages([0-9]+)\.yaml$/ do |f|
-  Rake::Task[:make_vk_obj].invoke
+namespace 'multiple' do
+  desc "get conversation list"
+  task :get_conversation_list, :name  do |f, args|
+    Rake::Task[:make_vk_obj].invoke  
 
-  target_id = get_index(f.name)
-  messages = get_messages(target_id).to_yaml
-  File.write(f.name, messages)
+    output = get_conversation_list.join("\n")
+        
+    if args[:name]
+      File.open(args[:name], 'w') { |f| f.puts(output) }
+    else
+      puts output
+    end
+  end
+
+  # desc "multiple targets: get conversations in yaml"
+  # task :get_conversations_yaml do
+  #   input = File.read('conversations_user_ids')
+  #   user_ids = get_user_ids(input)
+  #
+  #   user_ids.each do |target_id|
+  #     ENV['target_id'] = target_id.to_s
+  #     Rake::Task['get_messages_yaml'].reenable
+  #     Rake::Task['get_messages_yaml'].invoke
+  #   end
+  # end
 end
-
-rule /^output\/messages([0-9]+)\.txt$/ => [ 
-  proc {|name| "internal/messages#{get_index(name)}.yaml" }
-] do |f|
-  target_id = get_index(f.name)
-  
-  input_name = "internal/messages#{target_id}.yaml"
-  messages_yaml = YAML::load(File.read(input_name))
-  
-  messages_txt = msg_yaml_to_txt(messages_yaml)
-  File.write(f.name, messages_txt)
-end
-
-# desc "multiple targets: get conversations in yaml"
-# task :get_conversations_yaml do
-#   input = File.read('conversations_user_ids')
-#   user_ids = get_user_ids(input)
-
-#   user_ids.each do |target_id|
-#     ENV['target_id'] = target_id.to_s
-#     Rake::Task['get_messages_yaml'].reenable
-#     Rake::Task['get_messages_yaml'].invoke
-#   end
-# end
-
-# desc "clean up: clear output"
-# task :clear_output do
-#   targets = Dir.glob("output/*")
-#   FileUtils.rm(targets)
-# end
-
-# desc "clean up: clear internal"
-# task :clear_internal do
-#   targets = Dir.glob("internal/*yaml")
-#   FileUtils.rm(targets)
-# end
-
-# desc "clean up: clear token"
-# task :clear_token do
-#
-# end
