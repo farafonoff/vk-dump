@@ -153,3 +153,7 @@ def get_conversation_list
     users_part.map { |user| "#{user[:id]} \# #{user[:first_name]} #{user[:last_name]}" }
   end.flatten
 end
+
+def get_index(str)
+  str.scan(/[0-9]+/).first.to_i
+end
