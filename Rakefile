@@ -1,16 +1,25 @@
 require 'vkontakte_api'
 require 'yaml'
 require 'pry'
+require 'rake/clean'
 
 @config = YAML::load(File.read("config.yaml"))
 
 require './methods.rb'
 
-VkontakteApi.configure do |config|
-  config.api_version = '5.74'
-  
-  config.log_requests  = false
-  config.log_responses = false
+API_VERSION = 5.74
+
+VkontakteApi.configure { |config| config.api_version = API_VERSION.to_s }
+
+SOURCE_FILES = Rake::FileList.new("internal/*yaml")
+OUTPUT_FILES = Rake::FileList.new("output/*txt")
+
+CLEAN.include(SOURCE_FILES)
+CLOBBER.include(OUTPUT_FILES)
+
+desc "Remove only output files."
+task :clobber_nodep do
+  Rake::Cleaner.cleanup_files(CLOBBER)
 end
 
 namespace 'auth' do
@@ -82,20 +91,6 @@ end
 #     Rake::Task['get_messages_yaml'].invoke
 #   end
 # end
-
-# desc "multiple targets: get conversations in txt"
-# task :get_conversations_txt do
-#   input = File.read('conversations_user_ids')
-#   user_ids = get_user_ids(input)
-
-#   user_ids.each do |target_id|
-#     ENV['target_id'] = target_id.to_s
-#     Rake::Task['get_messages_txt'].reenable
-#     Rake::Task['get_messages_txt'].invoke
-#   end
-# end
-
-# clean-up
 
 # desc "clean up: clear output"
 # task :clear_output do
