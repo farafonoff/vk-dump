@@ -98,6 +98,13 @@ namespace 'single' do
     posts = posts_raw.map { |post_raw| make_post(post_raw) }.join("\n\n")
     File.write('output/wall.txt', posts)
   end
+
+  rule /^output\/wall_playground\.txt$/ => 'internal/wall.yaml' do |f|
+    posts_raw = YAML.load(File.read('internal/wall.yaml')).find_all {|post| post.attachments}
+
+    posts = posts_raw.map { |post_raw| make_post(post_raw) }.join("\n\n")
+    File.write('output/wall_playground.txt', posts)
+  end
 end
 
 namespace 'multiple' do

@@ -172,5 +172,12 @@ def make_footer(post)
 end
 
 def make_post(post)
+  if post['attachments']
+    attachments_count = post['attachments'].count
+    attachments = "-- Attachments: #{attachments_count} --"
+
+    return [ make_header(post), post['text'], attachments, make_footer(post) ].join("\n")
+  end
+
   [ make_header(post), post['text'], make_footer(post) ].join("\n")
 end
