@@ -39,7 +39,7 @@ namespace 'auth' do
 
   desc "remove token"
   task :rm_token do
-    FileUtils::rm('internal/token')
+    FileUtils::rm 'internal/token', :force => true
   end
 end
 
@@ -72,6 +72,23 @@ namespace 'single' do
     
     messages_txt = msg_yaml_to_txt(messages_yaml)
     File.write(f.name, messages_txt)
+  end
+
+  rule /^internal\/wall\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    posts_count = @vk.wall.get(count: 1, v: API_VERSION)['count']
+    pages_count = (posts_count / @config['part_count'].to_f).ceil
+
+    posts = []
+    (0...pages_count).each do |i|
+      current_posts = @vk.wall.get(count: @config['part_count'], offset: @config['part_count'] * i, v: API_VERSION)['items']
+      posts.push *current_posts
+
+      sleep @config['sleep_time']
+    end
+
+    File.write('internal/wall.yaml', YAML.dump(posts))
   end
 end
 
