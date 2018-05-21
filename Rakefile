@@ -3,6 +3,7 @@ require 'yaml'
 require 'pry'
 require 'rake/clean'
 
+Hashie.logger = Logger.new(nil)
 @config = YAML::load(File.read("config.yaml"))
 
 require './methods.rb'
@@ -93,6 +94,7 @@ namespace 'single' do
 
   rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
     posts_raw = YAML.load(File.read('internal/wall.yaml'))
+
     posts = posts_raw.map { |post_raw| make_post(post_raw) }.join("\n\n")
     File.write('output/wall.txt', posts)
   end
