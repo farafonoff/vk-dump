@@ -90,6 +90,12 @@ namespace 'single' do
 
     File.write('internal/wall.yaml', YAML.dump(posts))
   end
+
+  rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
+    posts_raw = YAML.load(File.read('internal/wall.yaml'))
+    posts = posts_raw.map { |post_raw| make_post(post_raw) }.join("\n\n")
+    File.write('output/wall.txt', posts)
+  end
 end
 
 namespace 'multiple' do

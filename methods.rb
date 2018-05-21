@@ -157,3 +157,20 @@ end
 def get_index(str)
   str.scan(/[0-9]+/).first.to_i
 end
+
+def make_header(post)
+  time = Time.at(post['date']).strftime(@config['time_format'])
+
+  "[#{time} #{post['from_id']}]:"
+end
+
+def make_footer(post)
+  likes_count = post['likes']['count']
+  reposts_count = post['reposts']['count']
+
+  "-- Likes: #{likes_count}, Reposts: #{reposts_count} --"
+end
+
+def make_post(post)
+  [ make_header(post), post['text'], make_footer(post) ].join("\n")
+end
