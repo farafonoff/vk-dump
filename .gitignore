@@ -1,5 +1,9 @@
 .rake_tasks~
 config.yaml
-internal/*
-output/*
+
 conversation_list
+
+internal/token
+*.yaml
+*.txt
+*.html
