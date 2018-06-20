@@ -14,6 +14,11 @@ def get_conversation_list
   end.flatten
 end
 
+
+def get_conversation_user_ids(input)
+  input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
+end
+
 def get_messages(target_id)
   messages_count = @vk.messages.getHistory(user_id: target_id, count: 0)['count']
   part_count = @config['part_count']

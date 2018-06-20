@@ -1,8 +1,6 @@
 .rake_tasks~
 config.yaml
 
-conversation_list
-
 internal/token
 *.yaml
 *.txt

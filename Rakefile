@@ -46,7 +46,7 @@ end
 
 namespace 'msg' do
   desc "get conversation list"
-  task :get_conversation_list, :name  do |f, args|
+  task :get_conversation_list, :name do |f, args|
     Rake::Task[:make_vk_obj].invoke  
 
     output = get_conversation_list.join("\n")
@@ -55,6 +55,16 @@ namespace 'msg' do
       File.open(args[:name], 'w') { |f| f.puts(output) }
     else
       puts output
+    end
+  end
+
+  desc "get conversations in txt"
+  task :get_conversations_in_txt, :name do |f, args|
+    input = File.read(args[:name])  
+    user_ids = get_conversation_user_ids(input)
+    
+    user_ids.each do |target_id|
+      Rake::Task["output/msg#{target_id}.txt"].invoke
     end
   end
 
@@ -79,18 +89,6 @@ namespace 'msg' do
   end
 end
 
-  # desc "multiple targets: get conversations in yaml"
-  # task :get_conversations_yaml do
-  #   input = File.read('conversations_user_ids')
-  #   user_ids = get_user_ids(input)
-  #
-  #   user_ids.each do |target_id|
-  #     ENV['target_id'] = target_id.to_s
-  #     Rake::Task['get_messages_yaml'].reenable
-  #     Rake::Task['get_messages_yaml'].invoke
-  #   end
-  # end
-  # end
 
   # rule /^internal\/wall\.yaml$/ do |f|
   #   Rake::Task[:make_vk_obj].invoke
