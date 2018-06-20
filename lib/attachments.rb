@@ -29,9 +29,15 @@ def get_attachment_txt(attachment)
 end
 
 def get_attachment_photo_url(photos)
-  resolution_strings = photos.keys.find_all {|str| str.include? 'photo_'}
-  max_res = resolution_strings.map {|str| str.scan(/photo_([0-9]+)/).first.first.to_i }.max
-  photo_url = photos["photo_#{max_res}"]
+  resolution_strings = photos.keys.find_all do |str|
+    str.include? 'photo_'
+  end
+
+  resolutions = resolution_strings.map do |str|
+    str.scan(/photo_([0-9]+)/).first.first.to_i
+  end
+
+  photo_url = photos["photo_#{resolutions.max}"]
 
   "#{photo_url}"
 end
