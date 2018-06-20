@@ -33,3 +33,13 @@
 
 #   "-- Likes: #{likes_count}, Reposts: #{reposts_count} --"
 # end
+
+# # def make_post(post)
+# #   if post['attachments']
+# #     attachments = process_attachments(post, 1)
+    
+# #     return [ make_header(post), post['text'], attachments, make_footer(post) ].join("\n")
+# #   end
+
+# #   [ make_header(post), post['text'], make_footer(post) ].join("\n")
+# # end

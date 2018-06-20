@@ -37,12 +37,13 @@ def msg_get_txt(msg)
   result = header + "\n" + body + "\n"
 
   if msg['fwd_messages']
-    result += ":::: Forwarded messages ::::\n"
+    result += ":::: Forwarded messages (#{msg['fwd_messages'].count}) ::::\n"
     result += text_indent(msg_get_forwarded_txt(msg))
   end
 
   if msg['attachments']
-    result += "Has attachments\n"
+    result += ":::: Attachments (#{msg['attachments'].count}) ::::\n"
+    result += text_indent(msg_get_attachments_txt(msg))
   end
 
   result
@@ -69,13 +70,10 @@ def msg_get_forwarded_txt(msg)
   msg_strings.join("\n")
 end
 
-# def process_forwarded(msg, level)
-#   prefix = get_prefix(level)
+def msg_get_attachments_txt(msg)
+  attachment_strings = msg['attachments'].map do |attachment|
+    get_attachment_txt(attachment)
+  end
 
-#   if msg['fwd_messages']
-#     
-#     return "#{prefix}Forwarded messages:\n#{forwarded_messages}" 
-#   end
-
-#   return ''
-# end
+  attachment_strings.join("\n")
+end

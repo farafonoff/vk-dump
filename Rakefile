@@ -6,6 +6,7 @@ require 'rake/clean'
 require './lib/configuration.rb'
 require './lib/common.rb'
 require './lib/messages.rb'
+require './lib/attachments.rb'
 
 desc "Remove only output files."
 task :clobber_nodep do
