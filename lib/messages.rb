@@ -37,7 +37,8 @@ def msg_get_txt(msg)
   result = header + "\n" + body + "\n"
 
   if msg['fwd_messages']
-    result += "Has forwarded messages\n"
+    result += ":::: Forwarded messages ::::\n"
+    result += text_indent(msg_get_forwarded_txt(msg))
   end
 
   if msg['attachments']
@@ -60,15 +61,19 @@ def msg_get_header_txt(msg)
   "[#{time} #{sender}]:"
 end
 
-# def msg_get_forwarded_txt(msg)
-#   true
-# end
+def msg_get_forwarded_txt(msg)
+  msg_strings = msg['fwd_messages'].map do |inner_msg|
+    msg_get_txt(inner_msg)
+  end
+
+  msg_strings.join("\n")
+end
 
 # def process_forwarded(msg, level)
 #   prefix = get_prefix(level)
 
 #   if msg['fwd_messages']
-#     forwarded_messages = msg['fwd_messages'].map { |msg| get_msg_txt(msg, level) }.join("\n")
+#     
 #     return "#{prefix}Forwarded messages:\n#{forwarded_messages}" 
 #   end
 
