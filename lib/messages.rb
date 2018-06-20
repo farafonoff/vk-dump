@@ -34,7 +34,17 @@ def msg_get_txt(msg)
   header = msg_get_header_txt(msg)
   body = msg_get_body_txt(msg)
 
-  header + "\n" + body + "\n"
+  result = header + "\n" + body + "\n"
+
+  if msg['fwd_messages']
+    result += "Has forwarded messages\n"
+  end
+
+  if msg['attachments']
+    result += "Has attachments\n"
+  end
+
+  result
 end
 
 def msg_get_body_txt(msg)
@@ -49,6 +59,10 @@ def msg_get_header_txt(msg)
 
   "[#{time} #{sender}]:"
 end
+
+# def msg_get_forwarded_txt(msg)
+#   true
+# end
 
 # def process_forwarded(msg, level)
 #   prefix = get_prefix(level)
