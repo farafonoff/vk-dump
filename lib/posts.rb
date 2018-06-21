@@ -1,13 +1,19 @@
 def get_post_txt(post)
   header = get_post_header_txt(post)
   body = get_post_body_txt(post)
-  footer = get_post_footer_txt(post)
+  result = header + "\n" + body + "\n"
 
-  result = header + "\n" + body + "\n" + footer + "\n"
+  footer = get_post_footer_txt(post)
+  result += (footer + "\n") if footer
 
   if post['attachments']
     result += "--- Attachments (#{post['attachments'].count}) ---\n"
     result += text_indent(get_post_attachments_txt(post)) + "\n"
+  end
+
+  if post['copy_history']
+    result += "--- Reposted (#{post['copy_history'].count}) ---\n"
+    result += text_indent(get_post_copy_history_txt(post))
   end
 
   result
@@ -29,16 +35,15 @@ def get_post_body_txt(post)
 end
 
 def get_post_footer_txt(post)
-  likes_count = post['likes']['count']
-  reposts_count = post['reposts']['count']
-  
-  if post['views']
-    views_count = post['views']['count']
+  result = []
 
-    return "--- Likes: #{likes_count}, Reposts: #{reposts_count}, Views: #{views_count} ---"
-  end
-  
-  "--- Likes: #{likes_count}, Reposts: #{reposts_count} ---"
+  result.push "Likes: #{post['likes']['count']}" if post['likes']
+  result.push "Reposts: #{post['reposts']['count']}" if post['reposts']
+  result.push "Views: #{post['views']['count']}" if post['views']
+
+  return nil if result.empty?
+
+  "--- #{result.join(', ')} ---"
 end
 
 def get_post_attachments_txt(post)
@@ -47,4 +52,10 @@ def get_post_attachments_txt(post)
   end
 
   attachment_strings.join("\n")
+end
+
+def get_post_copy_history_txt(post)
+  posts_txt = post['copy_history'].map { |post| get_post_txt(post) }.join("\n")
+
+  posts_txt
 end
