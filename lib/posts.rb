@@ -6,7 +6,8 @@ def get_post_txt(post)
   result = header + "\n" + body + "\n" + footer + "\n"
 
   if post['attachments']
-    result += ":::: Attachments (#{post['attachments'].count}) ::::\n"
+    result += "--- Attachments (#{post['attachments'].count}) ---\n"
+    result += text_indent(get_post_attachments_txt(post)) + "\n"
   end
 
   result
@@ -30,6 +31,20 @@ end
 def get_post_footer_txt(post)
   likes_count = post['likes']['count']
   reposts_count = post['reposts']['count']
+  
+  if post['views']
+    views_count = post['views']['count']
 
-  "-- Likes: #{likes_count}, Reposts: #{reposts_count} --"
+    return "--- Likes: #{likes_count}, Reposts: #{reposts_count}, Views: #{views_count} ---"
+  end
+  
+  "--- Likes: #{likes_count}, Reposts: #{reposts_count} ---"
+end
+
+def get_post_attachments_txt(post)
+  attachment_strings = post['attachments'].map do |attachment|
+    get_attachment_txt(attachment)
+  end
+
+  attachment_strings.join("\n")
 end
