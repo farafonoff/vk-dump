@@ -8,6 +8,7 @@ require './lib/common.rb'
 require './lib/messages.rb'
 require './lib/attachments.rb'
 require './lib/posts.rb'
+require './lib/avatars.rb'
 
 desc "Remove only output files."
 task :clobber_nodep do
@@ -123,13 +124,11 @@ namespace 'avatars' do
   rule /^output\/avatars\.txt$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    avatars = @vk.photos.get(album_id: AVATARS_ALBUM_ID)['items']
+    avatars = @vk.photos.get(album_id: AVATARS_ALBUM_ID, extended: 1)['items']
 
-    photos = avatars.map do |avatar|
-      get_best_photo_url(avatar)
-    end
+    photos_txts = avatars.map { |avatar| get_avatar_txt(avatar) }
 
-    photos_txt = photos.join("\n")
+    photos_txt = photos_txts.join("\n")
     File.write(f.name, photos_txt)
   end
 end
