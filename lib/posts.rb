@@ -1,4 +1,6 @@
 def get_post_txt(post)
+  id = post['id'].to_i
+
   header = get_post_header_txt(post)
   body = get_post_body_txt(post)
   result = header + "\n" + body + "\n"
@@ -14,6 +16,21 @@ def get_post_txt(post)
   if post['copy_history']
     result += "--- Reposted (#{post['copy_history'].count}) ---\n"
     result += text_indent(get_post_copy_history_txt(post))
+  end
+
+  if post['comments']
+    comments_count = post['comments']['count'].to_i
+    result += "--- Comments: #{comments_count} ---\n"
+
+    if (comments_count > 0)
+      comments_hashes = @vk.wall.getComments(post_id: id)['items']
+      comments_txts = comments_hashes.map { |comment_hash| get_post_txt(comment_hash) }
+      comments_txt = comments_txts.join("\n")
+
+      result += text_indent(comments_txt)
+
+      sleep @config['sleep_time']
+    end
   end
 
   result

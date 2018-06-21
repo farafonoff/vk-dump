@@ -113,7 +113,9 @@ namespace 'post' do
   end
 
   rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
-    posts = YAML.load(File.read('internal/wall.yaml'))
+    Rake::Task[:make_vk_obj].invoke
+
+    posts = YAML.load(File.read('internal/wall.yaml'))[0..30]
 
     posts_txt = posts.map { |post| get_post_txt(post) }.join("\n")
     File.write('output/wall.txt', posts_txt)
