@@ -3,7 +3,13 @@ def get_post_txt(post)
   body = get_post_body_txt(post)
   footer = get_post_footer_txt(post)
 
-  header + "\n" + body + "\n" + footer
+  result = header + "\n" + body + "\n" + footer + "\n"
+
+  if post['attachments']
+    result += ":::: Attachments (#{post['attachments'].count}) ::::\n"
+  end
+
+  result
 end
 
 def get_post_header_txt(post)

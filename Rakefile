@@ -111,7 +111,7 @@ namespace 'post' do
   rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
     posts = YAML.load(File.read('internal/wall.yaml'))
 
-    posts_txt = posts.map { |post| get_post_txt(post) }.join("\n\n")
+    posts_txt = posts.map { |post| get_post_txt(post) }.join("\n")
     File.write('output/wall.txt', posts_txt)
   end
 end
