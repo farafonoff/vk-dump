@@ -89,23 +89,23 @@ namespace 'msg' do
   end
 end
 
+namespace 'post' do
+  rule /^internal\/wall\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
 
-  # rule /^internal\/wall\.yaml$/ do |f|
-  #   Rake::Task[:make_vk_obj].invoke
+    posts_count = @vk.wall.get(count: 1, v: API_VERSION)['count']
+    pages_count = (posts_count / @config['part_count'].to_f).ceil
 
-  #   posts_count = @vk.wall.get(count: 1, v: API_VERSION)['count']
-  #   pages_count = (posts_count / @config['part_count'].to_f).ceil
+    posts = []
+    (0...pages_count).each do |i|
+      current_posts = @vk.wall.get(count: @config['part_count'], offset: @config['part_count'] * i, v: API_VERSION)['items']
+      posts.push *current_posts
 
-  #   posts = []
-  #   (0...pages_count).each do |i|
-  #     current_posts = @vk.wall.get(count: @config['part_count'], offset: @config['part_count'] * i, v: API_VERSION)['items']
-  #     posts.push *current_posts
+      sleep @config['sleep_time']
+    end
 
-  #     sleep @config['sleep_time']
-  #   end
-
-  #   File.write('internal/wall.yaml', YAML.dump(posts))
-  # end
+    File.write('internal/wall.yaml', YAML.dump(posts))
+  end
 
   # rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
   #   posts_raw = YAML.load(File.read('internal/wall.yaml'))
@@ -113,10 +113,4 @@ end
   #   posts = posts_raw.map { |post_raw| make_post(post_raw) }.join("\n\n")
   #   File.write('output/wall.txt', posts)
   # end
-
-  # rule /^output\/wall_playground\.txt$/ => 'internal/wall.yaml' do |f|
-  #   posts_raw = YAML.load(File.read('internal/wall.yaml')).find_all {|post| post.attachments}
-
-  #   posts = posts_raw.map { |post_raw| get_wall_post(post_raw, 0) }.join("\n\n")
-  #   File.write('output/wall_playground.txt', posts)
-  # end
+end
