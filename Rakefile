@@ -7,6 +7,7 @@ require './lib/configuration.rb'
 require './lib/common.rb'
 require './lib/messages.rb'
 require './lib/attachments.rb'
+require './lib/posts.rb'
 
 desc "Remove only output files."
 task :clobber_nodep do
@@ -107,10 +108,10 @@ namespace 'post' do
     File.write('internal/wall.yaml', YAML.dump(posts))
   end
 
-  # rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
-  #   posts_raw = YAML.load(File.read('internal/wall.yaml'))
+  rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
+    posts = YAML.load(File.read('internal/wall.yaml'))
 
-  #   posts = posts_raw.map { |post_raw| make_post(post_raw) }.join("\n\n")
-  #   File.write('output/wall.txt', posts)
-  # end
+    posts_txt = posts.map { |post| get_post_txt(post) }.join("\n\n")
+    File.write('output/wall.txt', posts_txt)
+  end
 end

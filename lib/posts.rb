@@ -1,45 +1,29 @@
-# def get_wall_post(post, level)
-#   # TODO: сделать обработку вложений у постов
+def get_post_txt(post)
+  header = get_post_header_txt(post)
+  body = get_post_body_txt(post)
+  footer = get_post_footer_txt(post)
 
-#   #binding.pry
+  header + "\n" + body + "\n" + footer
+end
 
-#   prefix = get_prefix(level)
-#   next_prefix = get_prefix(level + 1)
+def get_post_header_txt(post)
+  time = Time.at(post['date']).strftime(@config['time_format'])
+  author = post['from_id']
 
-#   text = prefix_multiline(post['text'], next_prefix)
-#   date = Time.at(post['date'])
-#   author = post['from_id']
+  "[#{time} #{author}]:"
+end
 
-#   if (post['post_type'] == 'post')
-#     pre_header = "#{prefix}Вложение (пост):\n"
-#   else
-#     pre_header = "#{prefix}Вложение (ответ на пост):\n"
-#   end
+def get_post_body_txt(post)
+  body = post['text']
 
-#   header = "#{next_prefix}[#{date} #{author}]:\n"
-  
-#   pre_header + header + text
-# end
+  return '<empty body>' if body.to_s.empty?
 
-# def make_header(post)
-#   time = Time.at(post['date']).strftime(@config['time_format'])
+  body
+end
 
-#   "[#{time} #{post['from_id']}]:"
-# end
+def get_post_footer_txt(post)
+  likes_count = post['likes']['count']
+  reposts_count = post['reposts']['count']
 
-# def make_footer(post)
-#   likes_count = post['likes']['count']
-#   reposts_count = post['reposts']['count']
-
-#   "-- Likes: #{likes_count}, Reposts: #{reposts_count} --"
-# end
-
-# # def make_post(post)
-# #   if post['attachments']
-# #     attachments = process_attachments(post, 1)
-    
-# #     return [ make_header(post), post['text'], attachments, make_footer(post) ].join("\n")
-# #   end
-
-# #   [ make_header(post), post['text'], make_footer(post) ].join("\n")
-# # end
+  "-- Likes: #{likes_count}, Reposts: #{reposts_count} --"
+end
