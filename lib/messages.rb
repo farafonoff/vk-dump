@@ -14,7 +14,6 @@ def get_conversation_list
   end.flatten
 end
 
-
 def get_conversation_user_ids(input)
   input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
 end
@@ -48,7 +47,7 @@ def msg_get_txt(msg)
 
   if msg['attachments']
     result += ":::: Attachments (#{msg['attachments'].count}) ::::\n"
-    result += text_indent(msg_get_attachments_txt(msg))
+    result += text_indent(msg_get_attachments_txt(msg)) + "\n"
   end
 
   result

@@ -23,6 +23,10 @@ def get_attachment_txt(attachment)
     title = attachment['doc']['title']
 
     return "doc: #{url} (#{title})"
+  when 'wall'
+    post_txt = get_post_txt(attachment['wall'])
+
+    return post_txt
   else
     return 'unknown type'
   end
