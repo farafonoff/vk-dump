@@ -28,11 +28,7 @@ def get_avatar_txt(avatar)
 
   if (comments_count > 0)
     comments_hashes = @vk.photos.getComments(photo_id: id)['items']
-    
-    comments_txts = comments_hashes.map do |comment_hash|
-      get_post_txt(comment_hash)
-    end
-
+    comments_txts = comments_hashes.map { |comment_hash| get_post_txt(comment_hash) }
     comments_txt = comments_txts.join("\n")
 
     out += text_indent(comments_txt)
