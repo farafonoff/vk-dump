@@ -22,7 +22,7 @@ def get_attachment_txt(attachment)
     url = attachment['doc']['url'] 
     title = attachment['doc']['title']
 
-    "doc: #{url} (#{title})"
+    return "doc: #{url} (#{title})"
   else
     return 'unknown type'
   end
