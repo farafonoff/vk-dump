@@ -115,3 +115,21 @@ namespace 'post' do
     File.write('output/wall.txt', posts_txt)
   end
 end
+
+namespace 'avatars' do
+  desc "get avatars"
+  task :get => 'output/avatars.txt'
+
+  rule /^output\/avatars\.txt$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    avatars = @vk.photos.get(album_id: AVATARS_ALBUM_ID)['items']
+
+    photos = avatars.map do |avatar|
+      get_best_photo_url(avatar)
+    end
+
+    photos_txt = photos.join("\n")
+    File.write(f.name, photos_txt)
+  end
+end

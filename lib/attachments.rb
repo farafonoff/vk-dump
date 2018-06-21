@@ -1,7 +1,7 @@
 def get_attachment_txt(attachment)
   case attachment['type']
   when 'photo'
-    url = get_attachment_photo_url(attachment['photo'])
+    url = get_best_photo_url(attachment['photo'])
     
     return "image: #{url}"
   when 'link'
@@ -30,18 +30,4 @@ def get_attachment_txt(attachment)
   else
     return 'unknown type'
   end
-end
-
-def get_attachment_photo_url(photos)
-  resolution_strings = photos.keys.find_all do |str|
-    str.include? 'photo_'
-  end
-
-  resolutions = resolution_strings.map do |str|
-    str.scan(/photo_([0-9]+)/).first.first.to_i
-  end
-
-  photo_url = photos["photo_#{resolutions.max}"]
-
-  "#{photo_url}"
 end
