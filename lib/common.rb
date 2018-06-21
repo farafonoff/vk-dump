@@ -24,3 +24,9 @@ def get_best_photo_url(photos)
 
   "#{photo_url}"
 end
+
+def get_time_txt(time)
+  res = Time.at(time).strftime(@config['time_format'])
+
+  res
+end

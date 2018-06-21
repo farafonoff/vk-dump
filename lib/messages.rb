@@ -60,7 +60,7 @@ def msg_get_body_txt(msg)
 end
 
 def msg_get_header_txt(msg)
-  time = Time.at(msg['date'])
+  time = get_time_txt(msg['date'])
   sender = msg['from_id'] || msg['user_id']
 
   "[#{time} #{sender}]:"

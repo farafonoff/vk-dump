@@ -4,7 +4,7 @@ def get_avatar_txt(avatar)
   reposts_count = avatar['reposts']['count']
   comments_count = avatar['comments']['count']
   text = avatar['text'].to_s
-  date = Time.at(avatar['date'])
+  date = get_time_txt(avatar['date'])
 
   out = ''
   out += "url: #{url}\n"

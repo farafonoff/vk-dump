@@ -92,6 +92,9 @@ namespace 'msg' do
 end
 
 namespace 'post' do
+  desc "get wall"
+  task :get_wall => 'output/wall.txt'
+
   rule /^internal\/wall\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
@@ -125,10 +128,9 @@ namespace 'avatars' do
     Rake::Task[:make_vk_obj].invoke
 
     avatars = @vk.photos.get(album_id: AVATARS_ALBUM_ID, extended: 1)['items']
-
     photos_txts = avatars.map { |avatar| get_avatar_txt(avatar) }
-
     photos_txt = photos_txts.join("\n")
+    
     File.write(f.name, photos_txt)
   end
 end

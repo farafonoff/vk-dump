@@ -20,7 +20,7 @@ def get_post_txt(post)
 end
 
 def get_post_header_txt(post)
-  time = Time.at(post['date']).strftime(@config['time_format'])
+  time = get_time_txt(post['date'])
   author = post['from_id']
 
   "[#{time} #{author}]:"
