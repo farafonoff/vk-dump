@@ -24,5 +24,19 @@ def get_avatar_txt(avatar)
   out += "reposts: #{reposts_count}\n"
   out += "comments: #{comments_count}\n"
 
+  # FIXME: комментарии должны получаться кусками за несколько запросов
+
+  if (comments_count > 0)
+    comments_hashes = @vk.photos.getComments(photo_id: id)['items']
+    
+    comments_txts = comments_hashes.map do |comment_hash|
+      get_post_txt(comment_hash)
+    end
+
+    comments_txt = comments_txts.join("\n")
+
+    out += text_indent(comments_txt)
+  end
+
   out
 end
