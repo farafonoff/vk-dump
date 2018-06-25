@@ -1,7 +1,7 @@
 Hashie.logger = Logger.new(nil)
 @config = YAML::load(File.read("config.yaml"))
 
-API_VERSION = 5.74
+API_VERSION = 5.80
 
 AVATARS_ALBUM_ID = -6
 
