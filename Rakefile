@@ -6,7 +6,7 @@ require 'rake/clean'
 require './lib/configuration.rb'
 require './lib/common.rb'
 require './lib/messages.rb'
-# require './lib/attachments.rb'
+require './lib/attachments.rb'
 # require './lib/posts.rb'
 # require './lib/avatars.rb'
 
@@ -68,6 +68,26 @@ namespace 'msg' do
     conversations = get_conversation_list
     File.write(f.name, YAML::dump(conversations))
   end
+
+  rule /^internal\/msg([0-9]+)\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    target_id = get_id_from_filename(f.name)
+    messages = get_messages(target_id).to_yaml
+    File.write(f.name, messages)
+  end
+
+  rule /^output\/msg([0-9]+)\.md$/ => [ 
+    proc {|name| "internal/msg#{get_id_from_filename(name)}.yaml" }
+  ] do |f|
+    target_id = get_id_from_filename(f.name)
+    
+    input_name = "internal/msg#{target_id}.yaml"
+    messages_yaml = YAML::load(File.read(input_name))
+    messages_md = msg_yaml_to_md(messages_yaml)
+
+    File.write(f.name, messages_md)
+  end
 end
 
   # desc "get conversations in txt"
@@ -80,25 +100,8 @@ end
   #   end
   # end
 
-  # rule /^internal\/msg([0-9]+)\.yaml$/ do |f|
-  #   Rake::Task[:make_vk_obj].invoke
 
-  #   target_id = get_id_from_filename(f.name)
-  #   messages = get_messages(target_id).to_yaml
-  #   File.write(f.name, messages)
-  # end
 
-  # rule /^output\/msg([0-9]+)\.txt$/ => [ 
-  #   proc {|name| "internal/msg#{get_id_from_filename(name)}.yaml" }
-  # ] do |f|
-  #   target_id = get_id_from_filename(f.name)
-    
-  #   input_name = "internal/msg#{target_id}.yaml"
-  #   messages_yaml = YAML::load(File.read(input_name))
-    
-  #   messages_txt = msg_yaml_to_txt(messages_yaml)
-  #   File.write(f.name, messages_txt)
-  # end
 #end
 
 # namespace 'post' do

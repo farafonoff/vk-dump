@@ -1,33 +1,34 @@
-# def get_attachment_txt(attachment)
-#   case attachment['type']
-#   when 'photo'
-#     url = get_best_photo_url(attachment['photo'])
+def get_attachment_md(attachment)
+  case attachment['type']
+  when 'photo'
+    url = get_best_photo_url(attachment['photo'])
     
-#     return "image: #{url}"
-#   when 'link'
-#     url = attachment['link']['url']
-#     title = attachment['link']['title']
+    #return "![image](#{url})"
+    return "*image:* [image](#{url})"
+  when 'link'
+    url = attachment['link']['url']
+    title = attachment['link']['title']
     
-#     return "link: #{url} (#{title})"
-#   when 'audio'
-#     artist = attachment['audio']['artist']
-#     title = attachment['audio']['title']
+    return "*link:* [#{title}](#{url})"
+  when 'audio'
+    artist = attachment['audio']['artist']
+    title = attachment['audio']['title']
       
-#     return "audio: #{artist} - #{title}"
-#   when 'video'
-#     title = attachment['video']['title']
+    return "*audio:* __#{artist} - #{title}__"
+  when 'video'
+    title = attachment['video']['title']
 
-#     return "video: #{title}"
-#   when 'doc'
-#     url = attachment['doc']['url'] 
-#     title = attachment['doc']['title']
+    return "*video:* __#{title}__"
+  when 'doc'
+    url = attachment['doc']['url'] 
+    title = attachment['doc']['title']
 
-#     return "doc: #{url} (#{title})"
-#   when 'wall'
-#     post_txt = get_post_txt(attachment['wall'])
+    return "*doc:* [#{title}](#{url})"
+  # when 'wall'
+  #   post_txt = get_post_txt(attachment['wall'])
 
-#     return post_txt
-#   else
-#     return 'unknown type'
-#   end
-# end
+  #   return post_txt
+  else
+    return '*unknown type*'
+  end
+end
