@@ -8,7 +8,7 @@ AVATARS_ALBUM_ID = -6
 VkontakteApi.configure { |config| config.api_version = API_VERSION.to_s }
 
 SOURCE_FILES = Rake::FileList.new("internal/*yaml")
-OUTPUT_FILES = Rake::FileList.new("output/*txt")
+OUTPUT_FILES = Rake::FileList.new("output/*md")
 
 CLEAN.include(SOURCE_FILES)
 CLOBBER.include(OUTPUT_FILES)

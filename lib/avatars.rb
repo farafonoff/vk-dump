@@ -1,38 +1,24 @@
-# def get_avatar_txt(avatar)
-#   url = get_best_photo_url(avatar)
-#   likes_count = avatar['likes']['count']
-#   reposts_count = avatar['reposts']['count']
-#   comments_count = avatar['comments']['count']
-#   text = avatar['text'].to_s
-#   date = get_time_txt(avatar['date'])
-#   id = avatar['id']
+def get_avatars
+  avatars = @vk.photos.get(album_id: AVATARS_ALBUM_ID, extended: 1)['items']
 
-#   out = ''
-#   out += "url: #{url}\n"
-#   out += "date: #{date}\n"
-#   out += "text: #{text}\n" unless text.empty?
-#   out += "likes: #{likes_count}\n"
+  avatars
+end
 
-#   # if (likes_count > 0)
-#   #   likes_user_ids = @vk.likes.getList(type: 'photo', item_id: id)['items']
+def get_avatar_md(avatar)
+  url = get_best_photo_url(avatar)
+  likes_count = avatar['likes']['count']
+  reposts_count = avatar['reposts']['count']
+  comments_count = avatar['comments']['count']
+  text = avatar['text'].to_s
+  date = get_time_txt(avatar['date'])
 
-#   #   out += "like user ids: #{likes_user_ids.join(", ")}\n"
+  out = ''
+  out += "\#\# #{date}\n\n"
+  out += "_url:_ #{url}  \n"
+  out += "_text:_ #{text}\n" unless text.empty?
+  out += "_likes:_ #{likes_count}  \n"
+  out += "_reposts:_ #{reposts_count}  \n"
+  out += "_comments:_ #{comments_count}  \n"
 
-#   #   sleep(@config['sleep_time'])
-#   # end
-
-#   out += "reposts: #{reposts_count}\n"
-#   out += "comments: #{comments_count}\n"
-
-#   # FIXME: комментарии должны получаться кусками за несколько запросов
-
-#   # if (comments_count > 0)
-#   #   comments_hashes = @vk.photos.getComments(photo_id: id)['items']
-#   #   comments_txts = comments_hashes.map { |comment_hash| get_post_txt(comment_hash) }
-#   #   comments_txt = comments_txts.join("\n")
-
-#   #   out += text_indent(comments_txt)
-#   # end
-
-#   out
-# end
+  out
+end

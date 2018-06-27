@@ -8,7 +8,7 @@ require './lib/common.rb'
 require './lib/messages.rb'
 require './lib/attachments.rb'
 require './lib/posts.rb'
-# require './lib/avatars.rb'
+require './lib/avatars.rb'
 
 desc "Remove only output files."
 task :clobber_nodep do
@@ -128,19 +128,24 @@ namespace 'post' do
   end
 end
 
-# end
+namespace 'avatars' do
+  desc "get avatars"
+  task :get => 'output/avatars.md'
 
-# namespace 'avatars' do
-#   desc "get avatars"
-#   task :get => 'output/avatars.txt'
+  rule /^internal\/avatars\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
 
-#   rule /^output\/avatars\.txt$/ do |f|
-#     Rake::Task[:make_vk_obj].invoke
+    avatars_yaml = get_avatars.to_yaml
+    File.write('internal/avatars.yaml', avatars_yaml)
+  end
 
-#     avatars = @vk.photos.get(album_id: AVATARS_ALBUM_ID, extended: 1)['items']
-#     photos_txts = avatars.map { |avatar| get_avatar_txt(avatar) }
-#     photos_txt = photos_txts.join("\n")
+  rule /^output\/avatars\.md$/ => 'internal/avatars.yaml' do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    input = YAML.load(File.read('internal/avatars.yaml'))
+    photos_mds = input.map { |avatar| get_avatar_md(avatar) }
+    photos_md = photos_mds.join("\n")
     
-#     File.write(f.name, photos_txt)
-#   end
-# end
+    File.write(f.name, photos_md)
+  end
+end
