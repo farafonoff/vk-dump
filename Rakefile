@@ -7,7 +7,7 @@ require './lib/configuration.rb'
 require './lib/common.rb'
 require './lib/messages.rb'
 require './lib/attachments.rb'
-# require './lib/posts.rb'
+require './lib/posts.rb'
 # require './lib/avatars.rb'
 
 desc "Remove only output files."
@@ -105,39 +105,29 @@ namespace 'msg' do
   end
 end
 
+namespace 'post' do
+  desc "get wall"
+  task :get_wall => 'output/wall.md'
 
+  rule /^internal\/wall\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
 
-#end
+    wall_yaml = get_wall.to_yaml
+    File.write('internal/wall.yaml', wall_yaml)
+  end
 
-# namespace 'post' do
-#   desc "get wall"
-#   task :get_wall => 'output/wall.txt'
+  rule /^output\/wall\.md$/ => 'internal/wall.yaml' do |f|
+    Rake::Task[:make_vk_obj].invoke
 
-#   rule /^internal\/wall\.yaml$/ do |f|
-#     Rake::Task[:make_vk_obj].invoke
+    input = YAML.load(File.read('internal/wall.yaml'))
+    posts = input[:posts]
+    profiles = input[:profiles]
 
-#     posts_count = @vk.wall.get(count: 1, v: API_VERSION)['count']
-#     pages_count = (posts_count / @config['part_count'].to_f).ceil
+    posts_md = posts.map { |post| get_post_md(post, profiles) }.join("\n")
+    File.write('output/wall.md', posts_md)
+  end
+end
 
-#     posts = []
-#     (0...pages_count).each do |i|
-#       current_posts = @vk.wall.get(count: @config['part_count'], offset: @config['part_count'] * i, v: API_VERSION)['items']
-#       posts.push *current_posts
-
-#       sleep @config['sleep_time']
-#     end
-
-#     File.write('internal/wall.yaml', YAML.dump(posts))
-#   end
-
-#   rule /^output\/wall\.txt$/ => 'internal/wall.yaml' do |f|
-#     Rake::Task[:make_vk_obj].invoke
-
-#     posts = YAML.load(File.read('internal/wall.yaml'))
-
-#     posts_txt = posts.map { |post| get_post_txt(post) }.join("\n")
-#     File.write('output/wall.txt', posts_txt)
-#   end
 # end
 
 # namespace 'avatars' do
