@@ -88,7 +88,7 @@ def msg_get_md(msg, profiles)
 
   if msg['attachments']
     result += "_Attachments (#{msg['attachments'].count}):_  \n"
-    result += text_indent(msg_get_attachments_md(msg)) + "\n"
+    result += text_indent(msg_get_attachments_md(msg, profiles)) + "\n"
   end
 
   result
@@ -115,9 +115,9 @@ def msg_get_forwarded_md(msg, profiles)
   msg_strings.join("\n")
 end
 
-def msg_get_attachments_md(msg)
+def msg_get_attachments_md(msg, profiles)
   attachment_strings = msg['attachments'].map do |attachment|
-    get_attachment_md(attachment)
+    get_attachment_md(attachment, profiles)
   end
 
   attachment_strings.join("  \n")

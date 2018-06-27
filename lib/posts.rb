@@ -80,7 +80,7 @@ end
 
 def get_post_attachments_md(post, profiles)
   attachment_strings = post['attachments'].map do |attachment|
-    get_attachment_md(attachment)
+    get_attachment_md(attachment, profiles)
   end
 
   attachment_strings.join("  \n")

@@ -1,4 +1,4 @@
-def get_attachment_md(attachment)
+def get_attachment_md(attachment, profiles)
   case attachment['type']
   when 'photo'
     url = get_best_photo_url(attachment['photo'])
@@ -24,10 +24,10 @@ def get_attachment_md(attachment)
     title = attachment['doc']['title']
 
     return "*doc:* [#{title}](#{url})"
-  # when 'wall'
-  #   post_txt = get_post_txt(attachment['wall'])
+  when 'wall'
+    post_md = get_post_md(attachment['wall'], profiles)
 
-  #   return post_txt
+    return post_md
   else
     return '*unknown type*'
   end
