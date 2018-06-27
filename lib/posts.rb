@@ -64,7 +64,7 @@ def get_post_body_md(post)
   body = post['text']
 
   return '`empty body`' if body.empty?
-  body.gsub(/\n/, "  \n")
+  body.gsub(/\n/, "  \n").gsub(/#/, '\#')
 end
 
 def get_post_footer_md(post)

@@ -104,7 +104,7 @@ end
 def msg_get_body_md(msg)
   return '`empty message`' if msg['body'].empty?
 
-  msg['body'].gsub(/\n/, "  \n")
+  msg['body'].gsub(/\n/, "  \n").gsub(/#/, '\#')
 end
 
 def msg_get_forwarded_md(msg, profiles)
