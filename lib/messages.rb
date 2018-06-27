@@ -123,6 +123,10 @@ def msg_get_attachments_md(msg)
   attachment_strings.join("  \n")
 end
 
-# def get_conversation_user_ids(input)
-#   input.split(/\n/).map { |elt| elt.scan(/([0-9]+) .*/).first.first.to_i }
-# end
+def get_conversation_user_ids(input)
+  ids = input.scan(/([0-9]+) \# user/).map do |elt|
+    elt.first.to_i
+  end
+
+  ids
+end

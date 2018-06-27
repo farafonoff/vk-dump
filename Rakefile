@@ -62,6 +62,21 @@ namespace 'msg' do
     end
   end
 
+  desc "get conversations in md"
+  task :get_conversations_in_md, :name do |f, args|
+    abort 'Specify filename!' unless args[:name]
+
+    input = File.read(args[:name])  
+    user_ids = get_conversation_user_ids(input)
+    
+    puts "User IDs: #{user_ids.join(', ')}"
+
+    user_ids.each do |target_id|
+      puts "processing: #{target_id}"
+      Rake::Task["output/msg#{target_id}.md"].invoke
+    end
+  end
+
   rule /^internal\/conversations\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
@@ -89,16 +104,6 @@ namespace 'msg' do
     File.write(f.name, messages_md)
   end
 end
-
-  # desc "get conversations in txt"
-  # task :get_conversations_in_txt, :name do |f, args|
-  #   input = File.read(args[:name])  
-  #   user_ids = get_conversation_user_ids(input)
-    
-  #   user_ids.each do |target_id|
-  #     Rake::Task["output/msg#{target_id}.txt"].invoke
-  #   end
-  # end
 
 
 
