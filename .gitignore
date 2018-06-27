@@ -4,4 +4,5 @@ config.yaml
 internal/token
 *.yaml
 *.txt
+*.md
 *.html
