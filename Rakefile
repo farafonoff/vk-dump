@@ -116,6 +116,18 @@ namespace 'post' do
     File.write('internal/wall.yaml', wall_yaml)
   end
 
+  rule /^internal\/wall([0-9]+)\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    post_id = get_id_from_filename(f.name)
+    user_id = @vk.users.get.first['id']
+    target_id = "#{user_id}_#{post_id}"
+
+    post_yaml = @vk.wall.getById(posts: target_id).to_yaml
+    
+    File.write(f.name, post_yaml)
+  end
+
   rule /^output\/wall\.md$/ => 'internal/wall.yaml' do |f|
     Rake::Task[:make_vk_obj].invoke
 
