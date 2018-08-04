@@ -128,10 +128,7 @@ namespace 'post' do
   end
 end
 
-namespace 'avatars' do
-  desc "get avatars"
-  task :get => 'output/avatars.md'
-
+namespace 'avatar' do
   rule /^internal\/avatars\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
@@ -139,13 +136,48 @@ namespace 'avatars' do
     File.write('internal/avatars.yaml', avatars_yaml)
   end
 
-  rule /^output\/avatars\.md$/ => 'internal/avatars.yaml' do |f|
+  rule /^internal\/avatar([0-9]+)\.yaml$/ => 'internal/avatars.yaml' do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    input = YAML.load(File.read('internal/avatars.yaml'))
-    photos_mds = input.map { |avatar| get_avatar_md(avatar) }
-    photos_md = photos_mds.join("\n")
+    target_id = get_id_from_filename(f.name)
+
+    avatars = YAML.load(File.read('internal/avatars.yaml'))
+    avatar = get_avatar_raw(target_id, avatars).to_yaml
     
-    File.write(f.name, photos_md)
+    File.write(f.name, avatar)
+  end
+
+  rule /^output\/avatar([0-9]+)\.md$/ => 'internal/avatars.yaml' do |f|
+    Rake::Task[:make_vk_obj].invoke
+    
+    target_id = get_id_from_filename(f.name)
+    input_fname = "internal/avatar#{target_id}.yaml"
+
+    Rake::Task[input_fname].invoke
+
+    avatar = YAML.load(File.read(input_fname))
+    avatar_md = get_avatar_md(avatar)
+    
+    File.write(f.name, avatar_md)
+  end
+
+  desc "get avatars in separate files (markdown)"
+  task :get_all do |t, args|
+    Rake::Task[:make_vk_obj].invoke
+
+    input_fname = 'internal/avatars.yaml'
+    Rake::Task[input_fname].invoke
+
+    avatars = YAML.load(File.read(input_fname))
+    avatar_ids = avatars.map {|elt| elt[:id] }
+
+    avatar_ids.each do |avatar_id|
+      fname = "output/avatar#{avatar_id}.md"
+      puts "Working on: #{fname}"
+      
+      Rake::Task[fname].invoke
+
+      sleep @config['sleep_time']
+    end
   end
 end
