@@ -186,51 +186,45 @@ namespace 'avatar' do
     Rake::Task[:make_vk_obj].invoke
 
     avatars_yaml = get_avatars.to_yaml
-    File.write('internal/avatars.yaml', avatars_yaml)
+    File.write(f.name, avatars_yaml)
   end
 
-  rule /^internal\/avatar([0-9]+)\.yaml$/ => 'internal/avatars.yaml' do |f|
+  rule /^internal\/avatar_likes\.yaml$/ => 'internal/avatars.yaml' do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    target_id = get_id_from_filename(f.name)
-
-    avatars = YAML.load(File.read('internal/avatars.yaml'))
-    avatar = get_avatar_raw(target_id, avatars).to_yaml
-    
-    File.write(f.name, avatar)
+    avatars_yaml = YAML::load(File.read('internal/avatars.yaml'))
+    avatar_likes_yaml = get_avatar_likes(avatars_yaml).to_yaml
+    File.write(f.name, avatar_likes_yaml)
   end
 
-  rule /^output\/avatar([0-9]+)\.md$/ => 'internal/avatars.yaml' do |f|
+  rule /^internal\/avatar_comments\.yaml$/ => 'internal/avatars.yaml' do |f|
     Rake::Task[:make_vk_obj].invoke
-    
-    target_id = get_id_from_filename(f.name)
-    input_fname = "internal/avatar#{target_id}.yaml"
 
-    Rake::Task[input_fname].invoke
-
-    avatar = YAML.load(File.read(input_fname))
-    avatar_md = get_avatar_md(avatar)
-    
-    File.write(f.name, avatar_md)
+    avatars_yaml = YAML::load(File.read('internal/avatars.yaml'))
+    avatar_comments_yaml = get_avatar_comments(avatars_yaml).to_yaml
+    File.write(f.name, avatar_comments_yaml)
   end
 
-  desc "get avatars in separate files (markdown)"
-  task :get_all do |t, args|
+  desc "get avatars"
+  rule /^output\/avatars.md$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    input_fname = 'internal/avatars.yaml'
-    Rake::Task[input_fname].invoke
+    avatars_yaml_fname = 'internal/avatars.yaml'
+    Rake::Task[avatars_yaml_fname].invoke
+    avatars = YAML.load(File.read(avatars_yaml_fname))
 
-    avatars = YAML.load(File.read(input_fname))
-    avatar_ids = avatars.map {|elt| elt[:id] }
+    avatar_likes_yaml_fname = 'internal/avatar_likes.yaml'
+    Rake::Task[avatar_likes_yaml_fname].invoke
+    avatar_likes = YAML.load(File.read(avatar_likes_yaml_fname))
 
-    avatar_ids.each do |avatar_id|
-      fname = "output/avatar#{avatar_id}.md"
-      puts "Working on: #{fname}"
-      
-      Rake::Task[fname].invoke
+    avatars_comments_yaml_fname = 'internal/avatar_comments.yaml'
+    Rake::Task[avatars_comments_yaml_fname].invoke
+    avatar_comments = YAML.load(File.read(avatars_comments_yaml_fname))
 
-      sleep @config['sleep_time']
-    end
+    avatars_md = avatars.map do |avatar|
+      get_avatar_md(avatar, avatar_likes, avatar_comments)
+    end.join("\n")
+
+    File.write("output/avatars.md", avatars_md)
   end
 end
