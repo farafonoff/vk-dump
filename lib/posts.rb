@@ -24,7 +24,7 @@ def get_wall
   { :posts => posts, :profiles => profiles }
 end
 
-def get_post_md(post, profiles)
+def get_post_md(post, profiles, comments = nil)
   header = get_post_header_md(post, profiles)
   body = get_post_body_md(post)
 
@@ -40,14 +40,23 @@ def get_post_md(post, profiles)
 
   if post['copy_history']
     result += "_Reposted (#{post['copy_history'].count}):_  \n"
-    result += text_indent(get_post_copy_history_md(post, profiles))
+    result += text_indent(get_post_copy_history_md(post, profiles)) + "\n\n"
   end
 
-  # if post['comments']
-  #   result += "_Comments (#{post['comments']['count'].to_i}):_  \n"
-  # end
+  if comments
+    result += "_Comments (#{comments.count}):_  \n"
+    result += text_indent(get_post_comments_md(comments, profiles))
+  end
 
   result
+end
+
+def get_post_comments_md(comments, profiles)
+  comments_md = comments.map do |comment|
+    get_post_md(comment, profiles)
+  end.join("\n")
+
+  comments_md
 end
 
 def get_post_header_md(post, profiles)

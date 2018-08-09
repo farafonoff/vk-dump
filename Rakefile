@@ -149,6 +149,25 @@ namespace 'post' do
     File.write(f.name, out_yaml)
   end
 
+  rule /^output\/wall[0-9]+_[0-9]+\.md$/ do |f|
+    owner_id, post_id = f.name.scan(/^output\/wall([0-9]+)_([0-9]+)\.md$/).first.map { |elt| elt.to_i }
+    target_id = "#{owner_id}_#{post_id}"
+    input_yaml_name = "internal/wall#{target_id}.yaml"
+    
+    Rake::Task[:make_vk_obj].invoke
+    Rake::Task[input_yaml_name].invoke
+
+    post_hash = YAML::load(File.read(input_yaml_name))
+
+    post = post_hash[:post].first
+    comments = post_hash[:comments]
+    profiles = post_hash[:profiles]
+
+    post_md = get_post_md(post, profiles, comments)
+
+    File.write(f.name, post_md)
+  end
+
   rule /^output\/wall\.md$/ => 'internal/wall.yaml' do |f|
     Rake::Task[:make_vk_obj].invoke
 
@@ -157,6 +176,7 @@ namespace 'post' do
     profiles = input[:profiles]
 
     posts_md = posts.map { |post| get_post_md(post, profiles) }.join("\n")
+
     File.write('output/wall.md', posts_md)
   end
 end
