@@ -116,16 +116,37 @@ namespace 'post' do
     File.write('internal/wall.yaml', wall_yaml)
   end
 
-  rule /^internal\/wall([0-9]+)\.yaml$/ do |f|
+  rule /^internal\/wall[0-9]+_[0-9]+\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    post_id = get_id_from_filename(f.name)
-    user_id = @vk.users.get.first['id']
-    target_id = "#{user_id}_#{post_id}"
+    owner_id, post_id = f.name.scan(/^internal\/wall([0-9]+)_([0-9]+)\.yaml$/).first.map {|elt| elt.to_i}
+    target_id = "#{owner_id}_#{post_id}"
 
-    post_yaml = @vk.wall.getById(posts: target_id).to_yaml
+    post = @vk.wall.getById(posts: target_id)
+
+    comments_count = @vk.wall.getComments(owner_id: owner_id, post_id: post_id, count: 1)['count']
+    part_count = @config['part_count'].to_i
+    pages_count = (comments_count.to_f / part_count.to_f).ceil
+
+    comments = []
     
-    File.write(f.name, post_yaml)
+    (1..pages_count).each do |i|
+      params = { owner_id: owner_id, post_id: post_id, sort: 'asc', count: part_count, offset: (i - 1) * part_count }
+
+      current_comments = @vk.wall.getComments(params)['items']
+      comments.push *current_comments
+  
+      sleep @config['sleep_time']
+    end
+
+    post.extend Hashie::Extensions::DeepFind
+    comments.extend Hashie::Extensions::DeepFind
+
+    user_ids = [ post.deep_find_all('from_id'), post.deep_find_all('user_id'), comments.deep_find_all('from_id'), comments.deep_find_all('user_id') ].flatten.uniq - [ nil ]
+    profiles = get_user_profiles(user_ids)
+
+    out_yaml = { post: post, comments: comments, profiles: profiles }.to_yaml
+    File.write(f.name, out_yaml)
   end
 
   rule /^output\/wall\.md$/ => 'internal/wall.yaml' do |f|
