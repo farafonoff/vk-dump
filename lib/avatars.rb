@@ -67,7 +67,6 @@ def get_avatar_md(avatar, avatar_likes, avatar_comments, filelist)
   id = avatar['id']
   
   filename = filelist[id].first
-  url = filelist[id].last
 
   likes_count = avatar['likes']['count']
   reposts_count = avatar['reposts']['count']
@@ -77,12 +76,8 @@ def get_avatar_md(avatar, avatar_likes, avatar_comments, filelist)
 
   out = ''
   out += "\#\# #{date}\n\n"
-  out += "_id:_ #{id}  \n"
-  out += "_filename:_ #{filename}  \n"
-  out += "_url:_ #{url}  \n"
+  out += "![#{id}](#{filename})  \n"
   out += "_text:_ #{text}\n" unless text.empty?
-  out += "_reposts:_ #{reposts_count}  \n"
-  out += "_comments:_ #{comments_count}  \n"
 
   liked_profiles = avatar_likes[:profiles]
 
@@ -92,15 +87,27 @@ def get_avatar_md(avatar, avatar_likes, avatar_comments, filelist)
 
     out += "_liked by (#{likes_count}):_ #{liked_names.join(', ')}  \n"
   end
+  
+  out += "_reposts:_ #{reposts_count}  \n"
 
   if comments_count > 0
     comments = avatar_comments[:comments][id]['items']
     comment_profiles = avatar_comments[:profiles]
     comments_md = comments.map { |comment| get_post_md(comment, comment_profiles) }.join("\n")
 
-    out += "_Comments (#{comments_count}):_  \n"
+    out += "_comments (#{comments_count}):_  \n"
     out += text_indent(comments_md)
   end
+
+  out
+end
+
+def get_avatar_files(avatar, filelist)
+  id = avatar['id']
+  
+  filename = filelist[id].first
+  url = filelist[id].last
+  out = "#{url}\n out=#{filename}"
 
   out
 end

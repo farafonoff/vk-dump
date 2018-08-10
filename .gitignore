@@ -6,3 +6,5 @@ internal/token
 *.txt
 *.md
 *.html
+*.files
+*.jpg

@@ -234,8 +234,27 @@ namespace 'avatar' do
 
     avatars = avatars_hash[:avatars]
     filelist = avatars_hash[:filelist]
-    avatars_md = avatars.map { |avatar| get_avatar_md(avatar, avatar_likes, avatar_comments, filelist) }.join("\n")
+    
+    avatars_md = avatars.map do |avatar|
+      get_avatar_md(avatar, avatar_likes, avatar_comments, filelist)
+    end.join("\n")
 
     File.write(f.name, avatars_md)
+  end
+
+  rule /^output\/avatars[0-9]+\.md.files$/ do |f|
+    target_id = get_id_from_filename(f.name)
+    avatars_yaml_fname = "internal/avatars#{target_id}.yaml"
+     
+    Rake::Task[:make_vk_obj].invoke
+    Rake::Task[avatars_yaml_fname].invoke
+    
+    avatars_hash = YAML::load(File.read(avatars_yaml_fname))
+    
+    avatars = avatars_hash[:avatars]
+    filelist = avatars_hash[:filelist]
+    avatars_md_files = avatars.map { |avatar| get_avatar_files(avatar, filelist) }.join("\n")
+
+    File.write(f.name, avatars_md_files)
   end
 end
