@@ -182,49 +182,60 @@ namespace 'post' do
 end
 
 namespace 'avatar' do
-  rule /^internal\/avatars\.yaml$/ do |f|
+  rule /^internal\/avatars[0-9]+\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    avatars_yaml = get_avatars.to_yaml
+    target_id = get_id_from_filename(f.name)
+    avatars_yaml = get_avatars(target_id).to_yaml
+    
     File.write(f.name, avatars_yaml)
   end
 
-  rule /^internal\/avatar_likes\.yaml$/ => 'internal/avatars.yaml' do |f|
+  rule /^internal\/avatar_likes[0-9]+\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    avatars_yaml = YAML::load(File.read('internal/avatars.yaml'))
+    target_id = get_id_from_filename(f.name)
+    avatars_yaml_fname = "internal/avatars#{target_id}.yaml"
+    
+    Rake::Task[avatars_yaml_fname].invoke
+    avatars_yaml = YAML::load(File.read(avatars_yaml_fname))
     avatar_likes_yaml = get_avatar_likes(avatars_yaml).to_yaml
+
     File.write(f.name, avatar_likes_yaml)
   end
 
-  rule /^internal\/avatar_comments\.yaml$/ => 'internal/avatars.yaml' do |f|
+  rule /^internal\/avatar_comments[0-9]+\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    avatars_yaml = YAML::load(File.read('internal/avatars.yaml'))
+    target_id = get_id_from_filename(f.name)
+    avatars_yaml_fname = "internal/avatars#{target_id}.yaml"
+    
+    Rake::Task[avatars_yaml_fname].invoke
+    avatars_yaml = YAML::load(File.read(avatars_yaml_fname))
     avatar_comments_yaml = get_avatar_comments(avatars_yaml).to_yaml
+
     File.write(f.name, avatar_comments_yaml)
   end
 
-  desc "get avatars"
-  rule /^output\/avatars.md$/ do |f|
+  rule /^output\/avatars[0-9]+\.md$/ do |f|
+    target_id = get_id_from_filename(f.name)
+    avatars_yaml_fname = "internal/avatars#{target_id}.yaml"
+    avatar_likes_yaml_fname = "internal/avatar_likes#{target_id}.yaml"
+    avatar_comments_yaml_fname = "internal/avatar_comments#{target_id}.yaml"
+    
     Rake::Task[:make_vk_obj].invoke
-
-    avatars_yaml_fname = 'internal/avatars.yaml'
     Rake::Task[avatars_yaml_fname].invoke
-    avatars = YAML.load(File.read(avatars_yaml_fname))
-
-    avatar_likes_yaml_fname = 'internal/avatar_likes.yaml'
     Rake::Task[avatar_likes_yaml_fname].invoke
-    avatar_likes = YAML.load(File.read(avatar_likes_yaml_fname))
+    Rake::Task[avatar_comments_yaml_fname].invoke
 
-    avatars_comments_yaml_fname = 'internal/avatar_comments.yaml'
-    Rake::Task[avatars_comments_yaml_fname].invoke
-    avatar_comments = YAML.load(File.read(avatars_comments_yaml_fname))
+    avatars = YAML::load(File.read(avatars_yaml_fname))
+    avatar_likes = YAML::load(File.read(avatar_likes_yaml_fname))
+    avatar_comments = YAML::load(File.read(avatar_comments_yaml_fname))
 
     avatars_md = avatars.map do |avatar|
       get_avatar_md(avatar, avatar_likes, avatar_comments)
     end.join("\n")
 
-    File.write("output/avatars.md", avatars_md)
+    File.write(f.name, avatars_md)
   end
 end

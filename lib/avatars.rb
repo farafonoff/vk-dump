@@ -1,5 +1,5 @@
-def get_avatars
-  params = { album_id: AVATARS_ALBUM_ID, extended: 1, count: @config['avatars_count'] }
+def get_avatars(target_id)
+  params = { owner_id: target_id, album_id: 'profile', extended: 1, count: @config['avatars_count'] }
   avatars = @vk.photos.get(params)['items']
 
   avatars
@@ -11,7 +11,8 @@ def get_avatar_likes(avatars)
 
   avatars.each do |avatar|
     target_id = avatar['id'].to_i
-    like_ids = @vk.likes.getList(type: 'photo', item_id: target_id)[:items]
+    owner_id = avatar['owner_id'].to_i
+    like_ids = @vk.likes.getList(type: 'photo', owner_id: owner_id, item_id: target_id)[:items]
 
     likes_hash[target_id] = like_ids
     profile_ids_raw.push *like_ids
@@ -30,10 +31,12 @@ def get_avatar_comments(avatars)
 
   avatars.each do |avatar|
     target_id = avatar['id'].to_i
-    comments_count = @vk.photos.getComments(photo_id: target_id)['count']
+    owner_id = avatar['owner_id'].to_i
+
+    comments_count = @vk.photos.getComments(owner_id: owner_id, photo_id: target_id)['count']
 
     if comments_count > 0
-      comments = @vk.photos.getComments(photo_id: target_id, count: @config['avatar_comments_count'])
+      comments = @vk.photos.getComments(owner_id: owner_id, photo_id: target_id, count: @config['avatar_comments_count'])
       comments_hash[target_id] = comments
     end
 
@@ -79,7 +82,7 @@ def get_avatar_md(avatar, avatar_likes, avatar_comments)
     comment_profiles = avatar_comments[:profiles]
     comments_md = comments.map { |comment| get_post_md(comment, comment_profiles) }.join("\n")
 
-    out += "_Comments (#{comments_count}):  \n"
+    out += "_Comments (#{comments_count}):_  \n"
     out += text_indent(comments_md)
   end
 
