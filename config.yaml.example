@@ -2,6 +2,6 @@ client_id: <CLIENT_ID_HERE>
 part_count: 100
 avatars_count: 1000
 avatar_comments_count: 100
-sleep_time: 2
+sleep_time: 1
 prefix_string: "> "
 time_format: "%Y-%m-%d %H:%M:%S"
