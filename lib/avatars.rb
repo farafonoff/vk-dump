@@ -2,7 +2,20 @@ def get_avatars(target_id)
   params = { owner_id: target_id, album_id: 'profile', extended: 1, count: @config['avatars_count'] }
   avatars = @vk.photos.get(params)['items']
 
-  avatars
+  filelist = {}
+
+  avatars.each do |avatar|
+    url = get_best_photo_url(avatar)
+  
+    owner_id = avatar['owner_id'].to_i
+    id = avatar['id'].to_i
+    ext = File::extname(url)
+    
+    filename = "#{owner_id}_#{id}#{ext}"
+    filelist[id] = [ filename, url ]
+  end
+
+  { avatars: avatars, filelist: filelist }
 end
 
 def get_avatar_likes(avatars)
@@ -50,10 +63,12 @@ def get_avatar_comments(avatars)
   { comments: comments_hash, profiles: profiles }
 end
 
-def get_avatar_md(avatar, avatar_likes, avatar_comments)
-  url = get_best_photo_url(avatar)
-
+def get_avatar_md(avatar, avatar_likes, avatar_comments, filelist)
   id = avatar['id']
+  
+  filename = filelist[id].first
+  url = filelist[id].last
+
   likes_count = avatar['likes']['count']
   reposts_count = avatar['reposts']['count']
   comments_count = avatar['comments']['count']
@@ -63,6 +78,7 @@ def get_avatar_md(avatar, avatar_likes, avatar_comments)
   out = ''
   out += "\#\# #{date}\n\n"
   out += "_id:_ #{id}  \n"
+  out += "_filename:_ #{filename}  \n"
   out += "_url:_ #{url}  \n"
   out += "_text:_ #{text}\n" unless text.empty?
   out += "_reposts:_ #{reposts_count}  \n"

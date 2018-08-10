@@ -198,7 +198,7 @@ namespace 'avatar' do
     avatars_yaml_fname = "internal/avatars#{target_id}.yaml"
     
     Rake::Task[avatars_yaml_fname].invoke
-    avatars_yaml = YAML::load(File.read(avatars_yaml_fname))
+    avatars_yaml = YAML::load(File.read(avatars_yaml_fname))[:avatars]
     avatar_likes_yaml = get_avatar_likes(avatars_yaml).to_yaml
 
     File.write(f.name, avatar_likes_yaml)
@@ -211,7 +211,7 @@ namespace 'avatar' do
     avatars_yaml_fname = "internal/avatars#{target_id}.yaml"
     
     Rake::Task[avatars_yaml_fname].invoke
-    avatars_yaml = YAML::load(File.read(avatars_yaml_fname))
+    avatars_yaml = YAML::load(File.read(avatars_yaml_fname))[:avatars]
     avatar_comments_yaml = get_avatar_comments(avatars_yaml).to_yaml
 
     File.write(f.name, avatar_comments_yaml)
@@ -228,13 +228,13 @@ namespace 'avatar' do
     Rake::Task[avatar_likes_yaml_fname].invoke
     Rake::Task[avatar_comments_yaml_fname].invoke
 
-    avatars = YAML::load(File.read(avatars_yaml_fname))
+    avatars_hash = YAML::load(File.read(avatars_yaml_fname))
     avatar_likes = YAML::load(File.read(avatar_likes_yaml_fname))
     avatar_comments = YAML::load(File.read(avatar_comments_yaml_fname))
 
-    avatars_md = avatars.map do |avatar|
-      get_avatar_md(avatar, avatar_likes, avatar_comments)
-    end.join("\n")
+    avatars = avatars_hash[:avatars]
+    filelist = avatars_hash[:filelist]
+    avatars_md = avatars.map { |avatar| get_avatar_md(avatar, avatar_likes, avatar_comments, filelist) }.join("\n")
 
     File.write(f.name, avatars_md)
   end
