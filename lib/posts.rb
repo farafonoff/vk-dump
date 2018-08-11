@@ -1,11 +1,11 @@
-def get_wall
-  posts_count = @vk.wall.get(count: 1, v: API_VERSION)['count']
+def get_wall(target_id = 0)
+  posts_count = @vk.wall.get(count: 1, owner_id: target_id, v: API_VERSION)['count']
   part_count = @config['part_count'].to_i
   pages_count = (posts_count.to_f / part_count.to_f).ceil
 
   posts = []
   (1..pages_count).each do |i|
-    params = { count: @config['part_count'], offset: (i - 1) * @config['part_count'], v: API_VERSION }
+    params = { owner_id: target_id, count: @config['part_count'], offset: (i - 1) * @config['part_count'], v: API_VERSION }
     current_posts = @vk.wall.get(params)['items']
     posts.push *current_posts
 
@@ -17,7 +17,7 @@ def get_wall
   from_ids = posts.deep_find_all('from_id')
   user_ids = posts.deep_find_all('user_id')
   owner_ids = posts.deep_find_all('owner_id')
-  uids = (from_ids + user_ids + owner_ids).find_all { |elt| elt > 0 }.uniq
+  uids = [ from_ids, user_ids, owner_ids ].flatten.find_all { |elt| elt.to_i > 0 }.uniq
 
   profiles = get_user_profiles(uids)
 

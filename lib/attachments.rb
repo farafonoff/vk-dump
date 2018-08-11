@@ -1,10 +1,28 @@
+def get_best_photo_url(photos)
+  resolution_strings = photos.keys.find_all { |str| str.include? 'photo_' }
+  resolutions = resolution_strings.map { |str| str.scan(/photo_([0-9]+)/).first.first.to_i }
+  photo_url = photos["photo_#{resolutions.max}"]
+
+  "#{photo_url}"
+end
+
+def get_photo_file(photo)
+  url = get_best_photo_url(photo)
+  ext = File::extname(url)
+  owner_id = photo['owner_id'].to_i
+  id = photo['id'].to_i
+
+  filename = "#{owner_id}_#{id}#{ext}"
+
+  return { filename: filename, url: url }
+end
+
 def get_attachment_md(attachment, profiles)
   case attachment['type']
   when 'photo'
-    url = get_best_photo_url(attachment['photo'])
+    filename = get_photo_file(attachment['photo'])[:filename]
     
-    #return "![image](#{url})"
-    return "*image:* [image](#{url})"
+    return "\![#{filename}](#{filename})"
   when 'link'
     url = attachment['link']['url']
     title = attachment['link']['title']
@@ -29,6 +47,6 @@ def get_attachment_md(attachment, profiles)
 
     return post_md
   else
-    return '*unknown type*'
+    return "*unknown type:* #{attachment['type']}"
   end
 end
