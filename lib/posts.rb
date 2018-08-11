@@ -1,14 +1,8 @@
 def get_wall(target_id = 0)
   params = { owner_id: target_id, sort: 'asc' }
+
   posts = multiple_requests(params) { |params_hash| @vk.wall.get(params_hash) }
-
-  posts.extend Hashie::Extensions::DeepFind
-
-  from_ids = posts.deep_find_all('from_id')
-  user_ids = posts.deep_find_all('user_id')
-  owner_ids = posts.deep_find_all('owner_id')
-  uids = [ from_ids, user_ids, owner_ids ].flatten.find_all { |elt| elt.to_i > 0 }.uniq
-
+  uids = get_uids([ posts ])
   profiles = get_user_profiles(uids)
 
   { :posts => posts, :profiles => profiles }

@@ -56,10 +56,7 @@ namespace 'post' do
     params = { owner_id: owner_id, post_id: post_id, sort: 'asc' }
     comments = multiple_requests(params) { |params_hash| @vk.wall.getComments(params_hash) }
 
-    post.extend Hashie::Extensions::DeepFind
-    comments.extend Hashie::Extensions::DeepFind
-
-    user_ids = [ post.deep_find_all('from_id'), post.deep_find_all('user_id'), comments.deep_find_all('from_id'), comments.deep_find_all('user_id') ].flatten.uniq - [ nil ]
+    user_ids = get_uids([ post, comments])
     profiles = get_user_profiles(user_ids)
 
     out_yaml = { post: post, comments: comments, profiles: profiles }.to_yaml

@@ -17,6 +17,23 @@ def multiple_requests(params)
   results
 end
 
+def get_uids(sources)
+  sources_extended = sources.map { |source| source.dup.extend Hashie::Extensions::DeepFind }
+
+  raw_ids = []
+  sources_extended.each do |source_extended|
+    from_ids = source_extended.deep_find_all('from_id')
+    user_ids = source_extended.deep_find_all('user_id')
+    owner_ids = source_extended.deep_find_all('owner_id')
+
+    raw_ids.push *([ from_ids, user_ids, owner_ids ].flatten)
+  end
+  
+  uids = raw_ids.find_all { |elt| elt.to_i > 0 }.uniq
+
+  uids
+end
+
 def get_user_profiles(ids)
   raise 'USERS > 1000: not implemented' if ids.count > 1000
 
