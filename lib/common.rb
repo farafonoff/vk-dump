@@ -1,3 +1,22 @@
+def multiple_requests(params)
+  count_params = params.merge({ count: 1})
+  
+  results_count = yield(count_params)['count']
+  part_count = @config['part_count'].to_i
+  pages_count = (results_count.to_f / part_count.to_f).ceil
+
+  results = []
+  (1..pages_count).each do |i|
+    current_params = params.merge({ count: part_count, offset: (i - 1) * part_count })
+    current_results = yield(current_params)['items']
+    results.push *current_results
+
+    sleep @config['sleep_time']
+  end
+
+  results
+end
+
 def get_user_profiles(ids)
   raise 'USERS > 1000: not implemented' if ids.count > 1000
 

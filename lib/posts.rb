@@ -1,16 +1,6 @@
 def get_wall(target_id = 0)
-  posts_count = @vk.wall.get(count: 1, owner_id: target_id, v: API_VERSION)['count']
-  part_count = @config['part_count'].to_i
-  pages_count = (posts_count.to_f / part_count.to_f).ceil
-
-  posts = []
-  (1..pages_count).each do |i|
-    params = { owner_id: target_id, count: @config['part_count'], offset: (i - 1) * @config['part_count'], v: API_VERSION }
-    current_posts = @vk.wall.get(params)['items']
-    posts.push *current_posts
-
-    sleep @config['sleep_time']
-  end
+  params = { owner_id: target_id, sort: 'asc' }
+  posts = multiple_requests(params) { |params_hash| @vk.wall.get(params_hash) }
 
   posts.extend Hashie::Extensions::DeepFind
 

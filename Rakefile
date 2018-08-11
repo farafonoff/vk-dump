@@ -53,20 +53,8 @@ namespace 'post' do
 
     post = @vk.wall.getById(posts: target_id)
 
-    comments_count = @vk.wall.getComments(owner_id: owner_id, post_id: post_id, count: 1)['count']
-    part_count = @config['part_count'].to_i
-    pages_count = (comments_count.to_f / part_count.to_f).ceil
-
-    comments = []
-    
-    (1..pages_count).each do |i|
-      params = { owner_id: owner_id, post_id: post_id, sort: 'asc', count: part_count, offset: (i - 1) * part_count }
-
-      current_comments = @vk.wall.getComments(params)['items']
-      comments.push *current_comments
-  
-      sleep @config['sleep_time']
-    end
+    params = { owner_id: owner_id, post_id: post_id, sort: 'asc' }
+    comments = multiple_requests(params) { |params_hash| @vk.wall.getComments(params_hash) }
 
     post.extend Hashie::Extensions::DeepFind
     comments.extend Hashie::Extensions::DeepFind
@@ -158,22 +146,9 @@ namespace 'post' do
     
     uid = args[:uid].to_i
     query = args[:query]
+    params = { owner_id: uid, query: query }
 
-    results_count = @vk.wall.search(owner_id: uid, query: query, count: 0)['count']
-    part_count = @config['part_count'].to_i
-    pages_count = (results_count.to_f / part_count.to_f).ceil
-
-    results = []
-    
-    (1..pages_count).each do |i|
-      params = { owner_id: uid, query: query, count: part_count, offset: (i - 1) * part_count }
-
-      current_results = @vk.wall.search(params)['items']
-      results.push *current_results
-  
-      sleep @config['sleep_time']
-    end
-
+    results = multiple_requests(params) { |params_hash| @vk.wall.search(params_hash) }
     urls_txt = results.map {|post| "wall#{uid}_#{post['id']}"}.join("\n")
 
     if args[:output_fname]
