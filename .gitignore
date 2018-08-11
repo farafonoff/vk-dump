@@ -8,3 +8,4 @@ internal/token
 *.html
 *.files
 *.jpg
+*.comments

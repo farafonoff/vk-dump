@@ -106,6 +106,20 @@ namespace 'post' do
     File.write(f.name, wall_yaml)
   end
 
+  rule /^internal\/wall[0-9]+\.comments$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    target_id = get_id_from_filename(f.name)
+    input_fname = "internal/wall#{target_id}.yaml"
+    Rake::Task[input_fname].invoke
+
+    posts = YAML.load(File.read(input_fname))[:posts]
+    posts_filtered = posts.find_all{ |post| post['comments']['count'] > 0 }
+    comments_txt = posts_filtered.map{ |post| "#{target_id}_#{post['id']}" }.join("\n")
+
+    File.write(f.name, comments_txt)
+  end
+
   rule /^output\/wall[0-9]+\.md$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
@@ -136,6 +150,37 @@ namespace 'post' do
     filelist = photos.map { |photo| "#{photo[:url]}\n out=#{photo[:filename]}" }
 
     File.write(f.name, filelist.join("\n"))
+  end
+
+  desc "search"
+  task :search, [:query, :uid, :output_fname ] do |t, args|
+    Rake::Task[:make_vk_obj].invoke
+    
+    uid = args[:uid].to_i
+    query = args[:query]
+
+    results_count = @vk.wall.search(owner_id: uid, query: query, count: 0)['count']
+    part_count = @config['part_count'].to_i
+    pages_count = (results_count.to_f / part_count.to_f).ceil
+
+    results = []
+    
+    (1..pages_count).each do |i|
+      params = { owner_id: uid, query: query, count: part_count, offset: (i - 1) * part_count }
+
+      current_results = @vk.wall.search(params)['items']
+      results.push *current_results
+  
+      sleep @config['sleep_time']
+    end
+
+    urls_txt = results.map {|post| "wall#{uid}_#{post['id']}"}.join("\n")
+
+    if args[:output_fname]
+      File.open(args[:output_fname], 'w') { |f| f.puts(urls_txt) }
+    else
+      puts urls_txt
+    end
   end
 end
 
