@@ -2,6 +2,7 @@ require 'vkontakte_api'
 require 'yaml'
 require 'pry'
 require 'rake/clean'
+require 'kramdown'
 
 require './lib/configuration.rb'
 require './lib/common.rb'
@@ -98,13 +99,35 @@ namespace 'post' do
     Rake::Task[input_fname].invoke
 
     input = YAML.load(File.read(input_fname))
-    
+      
     posts_md = get_wall_md(input)
 
     File.write(f.name, posts_md)
   end
 
-  rule /^output\/wall[0-9_]+\.md.files$/ do |f|
+  rule /^output\/wall[0-9]+\.html$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    target_id = get_id_params(f.name)[:id]
+    input_fname = "output/wall#{target_id}.md"
+    Rake::Task[input_fname].invoke
+    
+    txt = File.read(input_fname)
+    md = Kramdown::Document.new(txt)
+    
+    html = "<!DOCTYPE html>
+<html>
+<head>
+<meta charset=\"utf-8\">
+<title>Стена</title>
+</head>
+<body>" + md.to_html + "</body>
+</html>"
+
+    File.write(f.name, html)
+  end
+
+  rule /^output\/wall[0-9_]+\.files$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
     target_str = get_id_params(f.name)[:target_str]

@@ -74,17 +74,17 @@ def get_post_md(post, profiles, comments = nil)
   result += (footer + "  \n") if footer
 
   if post['attachments']
-    result += "_Attachments (#{post['attachments'].count}):_  \n"
+    result += "_Attachments (#{post['attachments'].count}):_  \n\n"
     result += text_indent(get_post_attachments_md(post, profiles)) + "\n\n"
   end
 
   if post['copy_history']
-    result += "_Reposted (#{post['copy_history'].count}):_  \n"
+    result += "_Reposted (#{post['copy_history'].count}):_  \n\n"
     result += text_indent(get_post_copy_history_md(post, profiles)) + "\n\n"
   end
 
   if comments
-    result += "_Comments (#{comments.count}):_  \n"
+    result += "_Comments (#{comments.count}):_  \n\n"
     result += text_indent(get_post_comments_md(comments, profiles))
   end
 
