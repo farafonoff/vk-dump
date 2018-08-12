@@ -48,17 +48,15 @@ namespace 'post' do
   rule /^internal\/wall[0-9]+_[0-9]+\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    owner_id, post_id = f.name.scan(/^internal\/wall([0-9]+)_([0-9]+)\.yaml$/).first.map {|elt| elt.to_i}
-    
-    out_yaml = get_post_file(owner_id, post_id).to_yaml
+    id_params = get_id_params(f.name)
+    out_yaml = get_post_file(id_params[:owner_id], id_params[:id]).to_yaml
 
     File.write(f.name, out_yaml)
   end
 
   rule /^output\/wall[0-9]+_[0-9]+\.md$/ do |f|
-    owner_id, post_id = f.name.scan(/^output\/wall([0-9]+)_([0-9]+)\.md$/).first.map { |elt| elt.to_i }
-    target_id = "#{owner_id}_#{post_id}"
-    input_yaml_name = "internal/wall#{target_id}.yaml"
+    target_str = get_id_params(f.name)[:target_str]
+    input_yaml_name = "internal/wall#{target_str}.yaml"
     
     Rake::Task[:make_vk_obj].invoke
     Rake::Task[input_yaml_name].invoke
@@ -73,7 +71,7 @@ namespace 'post' do
   rule /^internal\/wall[0-9]+\.yaml$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    target_id = get_id_from_filename(f.name)
+    target_id = get_id_params(f.name)[:id]
     wall_yaml = get_wall(target_id).to_yaml
 
     File.write(f.name, wall_yaml)
@@ -82,7 +80,7 @@ namespace 'post' do
   rule /^internal\/wall[0-9]+\.comments$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    target_id = get_id_from_filename(f.name)
+    target_id = get_id_params(f.name)[:id]
     input_fname = "internal/wall#{target_id}.yaml"
     Rake::Task[input_fname].invoke
 
@@ -95,7 +93,7 @@ namespace 'post' do
   rule /^output\/wall[0-9]+\.md$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    target_id = get_id_from_filename(f.name)
+    target_id = get_id_params(f.name)[:id]
     input_fname = "internal/wall#{target_id}.yaml"
     Rake::Task[input_fname].invoke
 
@@ -109,7 +107,7 @@ namespace 'post' do
   rule /^output\/wall[0-9]+\.md.files$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    target_id = get_id_from_filename(f.name)
+    target_id = get_id_params(f.name)[:id]
     wall_fname = "internal/wall#{target_id}.yaml"
     Rake::Task[wall_fname].invoke
     

@@ -17,6 +17,24 @@ def multiple_requests(params)
   results
 end
 
+def get_id_params(filename)
+  results = filename.scan(/(?:([0-9]+)_)?([0-9]+)/).first
+
+  id = results[1].to_i
+
+  if results[0]
+    owner_id = results[0].to_i
+    target_str = "#{owner_id}_#{id}"
+  else
+    owner_id = nil
+    target_str = id.to_s
+  end
+
+  result = { target_str: target_str, owner_id: owner_id, id: id }
+
+  result
+end
+
 def get_uids(sources)
   sources_extended = sources.map { |source| source.dup.extend Hashie::Extensions::DeepFind }
 
@@ -52,10 +70,6 @@ end
 
 def get_token(url)
   url.scan(/access_token=([^&]+)/).first.first
-end
-
-def get_id_from_filename(str)
-  str.scan(/[0-9]+/).first.to_i
 end
 
 def text_indent(text)
