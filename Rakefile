@@ -49,17 +49,9 @@ namespace 'post' do
     Rake::Task[:make_vk_obj].invoke
 
     owner_id, post_id = f.name.scan(/^internal\/wall([0-9]+)_([0-9]+)\.yaml$/).first.map {|elt| elt.to_i}
-    target_id = "#{owner_id}_#{post_id}"
+    
+    out_yaml = get_post_file(owner_id, post_id).to_yaml
 
-    post = @vk.wall.getById(posts: target_id)
-
-    params = { owner_id: owner_id, post_id: post_id, sort: 'asc' }
-    comments = multiple_requests(params) { |params_hash| @vk.wall.getComments(params_hash) }
-
-    user_ids = get_uids([ post, comments])
-    profiles = get_user_profiles(user_ids)
-
-    out_yaml = { post: post, comments: comments, profiles: profiles }.to_yaml
     File.write(f.name, out_yaml)
   end
 
@@ -73,11 +65,7 @@ namespace 'post' do
 
     post_hash = YAML::load(File.read(input_yaml_name))
 
-    post = post_hash[:post].first
-    comments = post_hash[:comments]
-    profiles = post_hash[:profiles]
-
-    post_md = get_post_md(post, profiles, comments)
+    post_md = get_post_file_md(post_hash)
 
     File.write(f.name, post_md)
   end
@@ -98,9 +86,8 @@ namespace 'post' do
     input_fname = "internal/wall#{target_id}.yaml"
     Rake::Task[input_fname].invoke
 
-    posts = YAML.load(File.read(input_fname))[:posts]
-    posts_filtered = posts.find_all{ |post| post['comments']['count'] > 0 }
-    comments_txt = posts_filtered.map{ |post| "#{target_id}_#{post['id']}" }.join("\n")
+    posts = YAML.load(File.read(input_fname))
+    comments_txt = get_posts_wcomments_list(posts).join("\n")
 
     File.write(f.name, comments_txt)
   end
@@ -113,10 +100,8 @@ namespace 'post' do
     Rake::Task[input_fname].invoke
 
     input = YAML.load(File.read(input_fname))
-    posts = input[:posts]
-    profiles = input[:profiles]
-
-    posts_md = posts.map { |post| get_post_md(post, profiles) }.join("\n")
+    
+    posts_md = get_wall_md(input)
 
     File.write(f.name, posts_md)
   end
@@ -129,12 +114,9 @@ namespace 'post' do
     Rake::Task[wall_fname].invoke
     
     wall_hash = YAML::load(File.read(wall_fname))
-    wall_hash.extend Hashie::Extensions::DeepFind
+    filelist_txt = get_hash_filelist(wall_hash).join("\n")
 
-    photos = wall_hash.deep_find_all('photo').map { |photo_hash| get_photo_file(photo_hash) }
-    filelist = photos.map { |photo| "#{photo[:url]}\n out=#{photo[:filename]}" }
-
-    File.write(f.name, filelist.join("\n"))
+    File.write(f.name, filelist_txt)
   end
 
   desc "search"
@@ -143,10 +125,8 @@ namespace 'post' do
     
     uid = args[:uid].to_i
     query = args[:query]
-    params = { owner_id: uid, query: query }
 
-    results = multiple_requests(params) { |params_hash| @vk.wall.search(params_hash) }
-    urls_txt = results.map {|post| "wall#{uid}_#{post['id']}"}.join("\n")
+    urls_txt = wall_search(uid, query).join("\n")
 
     if args[:output_fname]
       File.open(args[:output_fname], 'w') { |f| f.puts(urls_txt) }
