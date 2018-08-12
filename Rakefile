@@ -104,17 +104,17 @@ namespace 'post' do
     File.write(f.name, posts_md)
   end
 
-  rule /^output\/wall[0-9]+\.md.files$/ do |f|
+  rule /^output\/wall[0-9_]+\.md.files$/ do |f|
     Rake::Task[:make_vk_obj].invoke
 
-    target_id = get_id_params(f.name)[:id]
-    wall_fname = "internal/wall#{target_id}.yaml"
+    target_str = get_id_params(f.name)[:target_str]
+    wall_fname = "internal/wall#{target_str}.yaml"
     Rake::Task[wall_fname].invoke
     
     wall_hash = YAML::load(File.read(wall_fname))
     filelist_txt = get_hash_filelist(wall_hash).join("\n")
 
-    File.write(f.name, filelist_txt)
+    File.write(f.name, filelist_txt) if filelist_txt.length > 0
   end
 
   desc "search"

@@ -2,7 +2,7 @@ def get_hash_filelist(target_hash)
   target_hash_dup = target_hash.dup
   target_hash_dup.extend Hashie::Extensions::DeepFind
 
-  photos = target_hash_dup.deep_find_all('photo').map { |photo_hash| get_photo_file(photo_hash) }
+  photos = (target_hash_dup.deep_find_all('photo') || []).map { |photo_hash| get_photo_file(photo_hash) }
   filelist = photos.map { |photo| "#{photo[:url]}\n out=#{photo[:filename]}" }
 
   filelist
