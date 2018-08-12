@@ -9,3 +9,4 @@ internal/token
 *.files
 *.jpg
 *.comments
+output/*
