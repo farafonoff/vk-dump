@@ -1,3 +1,7 @@
+def get_token(url)
+  url.scan(/access_token=([^&]+)/).first.first
+end
+
 def multiple_requests(params)
   count_params = params.merge({ count: 1})
   
@@ -66,10 +70,6 @@ def get_user_profiles(ids)
   end
 
   out
-end
-
-def get_token(url)
-  url.scan(/access_token=([^&]+)/).first.first
 end
 
 def text_indent(text)
