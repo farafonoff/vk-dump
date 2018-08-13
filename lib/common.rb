@@ -103,13 +103,13 @@ def get_groups_hash(gids)
 end
 
 
-# def text_indent(text)
-#   prefix = @config['prefix_string']
-#   text.each_line.map { |line| prefix + line }.join
-# end
+def text_indent(text)
+  prefix = @config['prefix_string']
+  text.each_line.map { |line| prefix + line }.join
+end
 
-# def get_time_txt(time)
-#   res = Time.at(time).strftime(@config['time_format'])
+def get_time_txt(time)
+  res = Time.at(time).strftime(@config['time_format'])
 
-#   res
-# end
+  res
+end

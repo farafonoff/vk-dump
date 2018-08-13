@@ -75,6 +75,42 @@ namespace 'post' do
 
     File.write(f.name, names_hash.to_yaml)
   end
+
+  rule /^output\/wall[0-9]+\.md$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    target_id = get_id_params(f.name)[:id]
+
+    wall_yaml_filename = "internal/wall#{target_id}.yaml"
+    names_yaml_filename = "internal/wall#{target_id}.names.yaml"
+
+    Rake::Task[wall_yaml_filename].invoke
+    Rake::Task[names_yaml_filename].invoke
+
+    posts = YAML.load(File.read(wall_yaml_filename))
+    names = YAML.load(File.read(names_yaml_filename))
+
+    posts_md = get_wall_md(posts, names)
+
+    File.write(f.name, posts_md)
+  end
+
+  rule /^output\/wall[0-9]+_[0-9]+\.md$/ do |f|
+    target_str = get_id_params(f.name)[:target_str]
+    post_yaml_filename = "internal/wall#{target_str}.yaml"
+    names_yaml_filename = "internal/wall#{target_str}.names.yaml"
+
+    Rake::Task[:make_vk_obj].invoke
+    Rake::Task[post_yaml_filename].invoke
+    Rake::Task[names_yaml_filename].invoke
+
+    post = YAML::load(File.read(post_yaml_filename))
+    names = YAML.load(File.read(names_yaml_filename))
+
+    post_md = get_post_file_md(post, names)
+
+    File.write(f.name, post_md)
+  end
 end
 
   # rule /^internal\/wall[0-9]+\.comments$/ do |f|
@@ -90,34 +126,7 @@ end
   #     File.write(f.name, comments_txt)
   #   end
   
-  #   rule /^output\/wall[0-9]+_[0-9]+\.md$/ do |f|
-  #     target_str = get_id_params(f.name)[:target_str]
-  #     input_yaml_name = "internal/wall#{target_str}.yaml"
-      
-  #     Rake::Task[:make_vk_obj].invoke
-  #     Rake::Task[input_yaml_name].invoke
-  
-  #     post_hash = YAML::load(File.read(input_yaml_name))
-  
-  #     post_md = get_post_file_md(post_hash)
-  
-  #     File.write(f.name, post_md)
-  #   end
-  
-  #   rule /^output\/wall[0-9]+\.md$/ do |f|
-  #     Rake::Task[:make_vk_obj].invoke
-  
-  #     target_id = get_id_params(f.name)[:id]
-  #     input_fname = "internal/wall#{target_id}.yaml"
-  #     Rake::Task[input_fname].invoke
-  
-  #     input = YAML.load(File.read(input_fname))
-        
-  #     posts_md = get_wall_md(input)
-  
-  #     File.write(f.name, posts_md)
-  #   end
-  
+ 
   #   rule /^output\/wall[0-9]+\.html$/ do |f|
   #     Rake::Task[:make_vk_obj].invoke
   
