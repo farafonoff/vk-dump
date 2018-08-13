@@ -63,6 +63,18 @@ namespace 'post' do
 
     File.write(f.name, wall_yaml)
   end
+
+  rule /^internal\/.+\.names\.yaml$/ do |f|
+    Rake::Task[:make_vk_obj].invoke
+
+    source_filename = f.name.sub(/\.names\.yaml$/,'.yaml')
+    Rake::Task[source_filename].invoke
+
+    source_hash = YAML.load(File.read(source_filename))
+    names_hash = get_names_hash(source_hash)
+
+    File.write(f.name, names_hash.to_yaml)
+  end
 end
 
   # rule /^internal\/wall[0-9]+\.comments$/ do |f|

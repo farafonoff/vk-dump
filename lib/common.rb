@@ -39,46 +39,77 @@ def get_id_params(filename)
   result
 end
 
-def get_uids(sources)
-  sources_extended = sources.map { |source| source.dup.extend Hashie::Extensions::DeepFind }
+def get_ugids_from_hash(source)
+  source_extended = source.dup.extend Hashie::Extensions::DeepFind
 
-  raw_ids = []
-  sources_extended.each do |source_extended|
-    from_ids = source_extended.deep_find_all('from_id')
-    user_ids = source_extended.deep_find_all('user_id')
-    owner_ids = source_extended.deep_find_all('owner_id')
+  from_ids = source_extended.deep_find_all('from_id') || []
+  user_ids = source_extended.deep_find_all('user_id') || []
+  owner_ids = source_extended.deep_find_all('owner_id') || []
 
-    raw_ids.push *([ from_ids, user_ids, owner_ids ].flatten)
+  ids = [ from_ids, user_ids, owner_ids ].flatten.uniq
+  results = ids.group_by{ |elt| elt < 0 }
+
+  { uids: results[false], gids: results[true] }
+end
+
+def get_names_hash(source_hash)
+  ugids = get_ugids_from_hash(source_hash)
+
+  users_hash = get_users_hash(ugids[:uids] || [])
+  groups_hash = get_groups_hash(ugids[:gids] || [])
+  result_hash = users_hash.merge(groups_hash)
+
+  result_hash
+end
+
+def get_users_hash(uids)
+  users_arr = []
+  
+  uids.each_slice(@config['users_part_count']) do |uids_slice|
+    current_users = @vk.users.get(user_ids: uids_slice)
+
+    current_users_arr = current_users.map do |hsh|
+      [ hsh[:id], "#{hsh[:first_name]} #{hsh[:last_name]}"]
+    end
+
+    users_arr.push *current_users_arr
+
+    sleep @config['sleep_time']
   end
   
-  uids = raw_ids.find_all { |elt| elt.to_i > 0 }.uniq
+  users_hash = users_arr.to_h
 
-  uids
+  users_hash
 end
 
-def get_user_profiles(ids)
-  raise 'USERS > 1000: not implemented' if ids.count > 1000
+def get_groups_hash(gids)
+  groups_arr = []
+  
+  gids.map{ |elt| -elt }.each_slice(@config['groups_part_count']) do |gids_slice|
+    current_groups = @vk.groups.getById(group_ids: gids_slice)
 
-  users = @vk.users.get(user_ids: ids)
+    current_groups_arr = current_groups.map do |hsh|
+      [ -hsh[:id], "#{hsh[:name]} (group)" ]
+    end
 
-  out = {}
-  users.each do |elt|
-    id = elt[:id]
-    username = "#{elt[:first_name]} #{elt[:last_name]}"
+    groups_arr.push *current_groups_arr
 
-    out[id] = username
+    sleep @config['sleep_time']
   end
+  
+  groups_hash = groups_arr.to_h
 
-  out
+  groups_hash
 end
 
-def text_indent(text)
-  prefix = @config['prefix_string']
-  text.each_line.map { |line| prefix + line }.join
-end
 
-def get_time_txt(time)
-  res = Time.at(time).strftime(@config['time_format'])
+# def text_indent(text)
+#   prefix = @config['prefix_string']
+#   text.each_line.map { |line| prefix + line }.join
+# end
 
-  res
-end
+# def get_time_txt(time)
+#   res = Time.at(time).strftime(@config['time_format'])
+
+#   res
+# end
