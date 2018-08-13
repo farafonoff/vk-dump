@@ -33,7 +33,6 @@ def get_post_file_md(post_hash, names)
   post_md
 end
 
-
 def get_post_md(post, names, comments = nil)
   header = get_post_header_md(post, names)
   body = get_post_body_md(post)
@@ -91,6 +90,7 @@ def get_post_footer_md(post)
 
   result.push "Likes: #{post['likes']['count']}" if post['likes']
   result.push "Reposts: #{post['reposts']['count']}" if post['reposts']
+  result.push "Comments: #{post['comments']['count']}" if post['comments']
 
   return nil if result.empty?
 
